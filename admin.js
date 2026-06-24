@@ -152,6 +152,13 @@ function showMain() {
   initLojaControl();
 }
 
+function showLogin() {
+  stopPolling();
+  screenMain.classList.remove('active');
+  screenLogin.classList.add('active');
+  if (passInput) passInput.value = '';
+}
+
 /* ════════════════════════════════════════════════════════════
    SIDEBAR
 ════════════════════════════════════════════════════════════ */
