@@ -718,7 +718,12 @@ document.getElementById('delivery-back').addEventListener('click', () => {
 
 document.getElementById('delivery-close').addEventListener('click', closeAllModals);
 
-document.getElementById('delivery-next').addEventListener('click', () => {
+let submittingOrder = false; // 🔒 trava contra duplo clique
+
+document.getElementById('delivery-next').addEventListener('click', async () => {
+  if (submittingOrder) return; // já está processando — ignora cliques extras
+
+  const btn   = document.getElementById('delivery-next');
   const name  = document.getElementById('customer-name').value.trim();
   const phone = document.getElementById('customer-phone').value.trim();
   const errEl = document.getElementById('delivery-error');
@@ -729,7 +734,20 @@ document.getElementById('delivery-next').addEventListener('click', () => {
     return;
   }
   errEl.classList.add('hidden');
-  openPixStep(name, phone);
+
+  // Trava o botão durante a geração do PIX
+  submittingOrder = true;
+  btn.disabled = true;
+  const txtOriginal = btn.textContent;
+  btn.textContent = 'Gerando PIX…';
+
+  try {
+    await openPixStep(name, phone);
+  } finally {
+    submittingOrder = false;
+    btn.disabled = false;
+    btn.textContent = txtOriginal;
+  }
 });
 
 /* ════════════════════════════════════════════════════════════
