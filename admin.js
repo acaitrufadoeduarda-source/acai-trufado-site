@@ -359,29 +359,51 @@ fabRefresh.addEventListener('click', loadOrders);
 /* ════════════════════════════════════════════════════════════
    PEDIDOS — carregar do localStorage + fallback API
 ════════════════════════════════════════════════════════════ */
+// Converte um pedido vindo do servidor (Supabase) para o formato dos cards
+function mapServerOrder(o) {
+  return {
+    id:             o.id,
+    createdAt:      o.created_at,
+    product:        { name: o.product_name },
+    summary:        o.summary || [],
+    deliveryMethod: o.delivery_method,
+    customerName:   o.customer_name,
+    customerPhone:  o.customer_phone,
+    total:          o.total,
+    status:         o.status,
+    pixCode:        o.pix_code,
+  };
+}
+
 async function loadOrders() {
-  // Sempre carrega do localStorage primeiro (resposta imediata)
+  // Tenta o servidor primeiro — é a fonte de verdade (pedidos dos clientes)
+  let serverOrders = null;
+  try {
+    const res = await apiFetch('GET', '/api/orders');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) serverOrders = data.map(mapServerOrder);
+    }
+  } catch { /* offline ou 401 — apiFetch já trata o 401 (mostra login) */ }
+
+  if (serverOrders) {
+    // O endpoint /api/orders já retorna só os ativos (sem concluído/cancelado).
+    // Para o histórico, usamos o localStorage como complemento.
+    if (filtroAtivo === 'historico') {
+      const todos = getOrders();
+      renderOrders(todos.filter(o => ['concluido','cancelado'].includes(o.status)));
+    } else {
+      renderOrders(serverOrders);
+    }
+    return;
+  }
+
+  // Fallback: servidor não respondeu — usa localStorage
   const todos = getOrders();
   const localOrders = filtroAtivo === 'historico'
     ? todos.filter(o => ['concluido','cancelado'].includes(o.status))
     : todos.filter(o => !['concluido','cancelado'].includes(o.status));
   renderOrders(localOrders);
-
-  // Tenta sincronizar com backend em background
-  try {
-    const res = await apiFetch('GET', '/api/orders');
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length) {
-        // Faz merge: backend é a fonte de verdade para status
-        data.forEach(serverOrder => {
-          const idx = localOrders.findIndex(o => o.id === serverOrder.id);
-          if (idx !== -1) localOrders[idx].status = serverOrder.status;
-        });
-        renderOrders(localOrders);
-      }
-    }
-  } catch { /* backend offline — OK, usamos localStorage */ }
 }
 
 function renderOrders(orders) {
