@@ -861,8 +861,15 @@ async function openPixStep(customerName, customerPhone) {
     const res = await fetch(`${API_BASE}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order),
-      signal: AbortSignal.timeout(3000),
+      body: JSON.stringify({
+        customerName:   order.customerName,
+        customerPhone:  order.customerPhone,
+        productName:    order.product?.name ?? order.productName ?? '',
+        summary:        order.summary,
+        deliveryMethod: order.deliveryMethod,
+        total:          order.total,
+      }),
+      signal: AbortSignal.timeout(8000),
     });
     if (res.ok) {
       const data = await res.json();
