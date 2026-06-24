@@ -791,47 +791,17 @@ function crc16(str) {
   return ((crc & 0xFFFF).toString(16).toUpperCase().padStart(4,'0'));
 }
 
-/* QR Code simples (módulos 21×21 desenhados em canvas) */
+/* QR Code REAL via biblioteca qrcode (carregada no index.html) */
 function drawQR(canvas, text) {
-  /* QR Code gerado via divisão de dados em células — versão simples visual */
-  const size = canvas.width;
-  const ctx  = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, size, size);
-  ctx.fillStyle = '#000';
-
-  // Gera um padrão pseudo-aleatório baseado no hash do texto
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
-
-  const cells = 21;
-  const cell  = Math.floor(size / cells);
-
-  for (let r = 0; r < cells; r++) {
-    for (let c = 0; c < cells; c++) {
-      // Finder patterns (cantos)
-      const inFinder =
-        (r < 7 && c < 7) || (r < 7 && c >= cells - 7) || (r >= cells - 7 && c < 7);
-      if (inFinder) {
-        // Borda externa
-        if (r === 0 || r === 6 || c === 0 || c === 6 ||
-            (r >= cells-7 && (r === cells-7 || r === cells-1 || c === 0 || c === 6)) ||
-            (c >= cells-7 && (c === cells-7 || c === cells-1 || r === 0 || r === 6))) {
-          ctx.fillRect(c * cell, r * cell, cell, cell);
-        }
-        // Núcleo interno (3×3)
-        if ((r >= 2 && r <= 4 && c >= 2 && c <= 4) ||
-            (r >= 2 && r <= 4 && c >= cells - 5 && c <= cells - 3) ||
-            (r >= cells - 5 && r <= cells - 3 && c >= 2 && c <= 4)) {
-          ctx.fillRect(c * cell, r * cell, cell, cell);
-        }
-        continue;
-      }
-      // Dados pseudo-aleatórios (baseados no hash)
-      const bit = ((hash >>> ((r * cells + c) % 31)) ^ (r + c * 7)) & 1;
-      if (bit) ctx.fillRect(c * cell, r * cell, cell, cell);
-    }
-  }
+  if (!window.QRCode || !text) return;
+  window.QRCode.toCanvas(canvas, text, {
+    width: canvas.width,
+    margin: 1,
+    errorCorrectionLevel: 'M',
+    color: { dark: '#000000', light: '#ffffff' },
+  }, (err) => {
+    if (err) console.error('Erro ao gerar QR Code:', err);
+  });
 }
 
 async function openPixStep(customerName, customerPhone) {
