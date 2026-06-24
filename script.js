@@ -1316,16 +1316,20 @@ function escHtml(s = '') {
   // Verifica status real no servidor
   try {
     const r = await fetch(`${API_BASE}/api/orders/${savedId}`, { signal: AbortSignal.timeout(4000) });
-    if (r.ok) {
-      const serverOrder = await r.json();
-      if (!serverOrder || ['concluido', 'cancelado', 'entregue'].includes(serverOrder.status)) {
-        localStorage.removeItem('acai_active_order');
-        activeOrderId = null;
-        return;
-      }
+    if (!r.ok) {
+      // 404 = pedido não existe no servidor (ID local/mock ou já removido)
+      localStorage.removeItem('acai_active_order');
+      activeOrderId = null;
+      return;
+    }
+    const serverOrder = await r.json();
+    if (!serverOrder || ['concluido', 'cancelado', 'entregue'].includes(serverOrder.status)) {
+      localStorage.removeItem('acai_active_order');
+      activeOrderId = null;
+      return;
     }
   } catch (_) {
-    // Se API falhar, checa localStorage como fallback
+    // Se API offline, checa localStorage como fallback
     const orders = getOrders();
     const order  = orders.find(o => o.id === savedId);
     if (!order || ['concluido', 'cancelado'].includes(order.status)) {
