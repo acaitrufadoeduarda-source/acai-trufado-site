@@ -1,0 +1,22 @@
+{
+  "name": "Açaí Trufado - Eduarda",
+  "short_name": "Açaí Trufado",
+  "description": "Monte seu açaí trufado favorito!",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a0015",
+  "theme_color": "#e91e8c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logotipo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logotipo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

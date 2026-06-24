@@ -522,7 +522,7 @@ function buildCard(order) {
 /* ════════════════════════════════════════════════════════════
    WHATSAPP — monta mensagem e abre wa.me
 ════════════════════════════════════════════════════════════ */
-const SITE_URL = 'https://public-8o0awhf7b-vitorum4.vercel.app';
+const SITE_URL = 'https://acai-trufado-eduarda.vercel.app';
 
 function abrirWhatsApp(order, tipo) {
   const phone = (order.customerPhone || '').replace(/\D/g, '');
@@ -1135,4 +1135,8 @@ function showToast(msg, duration = 3000) {
   toastEl.classList.remove('hidden');
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.add('hidden'), duration);
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
 }
