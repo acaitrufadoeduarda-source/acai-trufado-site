@@ -791,16 +791,19 @@ function crc16(str) {
   return ((crc & 0xFFFF).toString(16).toUpperCase().padStart(4,'0'));
 }
 
-/* QR Code REAL via biblioteca qrcode (carregada no index.html) */
+/* QR Code REAL via biblioteca QRious (carregada no index.html) */
 function drawQR(canvas, text) {
-  if (!window.QRCode || !text) return;
-  window.QRCode.toCanvas(canvas, text, {
-    width: canvas.width,
-    margin: 1,
-    errorCorrectionLevel: 'M',
-    color: { dark: '#000000', light: '#ffffff' },
-  }, (err) => {
-    if (err) console.error('Erro ao gerar QR Code:', err);
+  if (!window.QRious || !text) {
+    console.error('QRious não carregou ou texto vazio');
+    return;
+  }
+  new window.QRious({
+    element: canvas,
+    value:   text,
+    size:    canvas.width,
+    level:   'M',
+    background: '#ffffff',
+    foreground: '#000000',
   });
 }
 
