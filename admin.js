@@ -86,9 +86,25 @@ const emailInput = document.getElementById('login-email');
 const passInput  = document.getElementById('login-password');
 const pinInput   = passInput; // alias para compatibilidade com código que usa pinInput
 
-// Restaura sessão salva
+// Restaura sessão salva — mas VALIDA o token antes de confiar nele
 const savedSession = sessionStorage.getItem('acai_admin_session');
-if (savedSession) { pin = savedSession; showMain(); }
+if (savedSession) {
+  pin = savedSession;
+  // Testa a sessão: se o servidor recusar (401), a sessão é velha → volta pro login
+  fetch(`${API_BASE}/api/orders`, { headers: { 'x-admin-token': savedSession } })
+    .then(r => {
+      if (r.status === 401) {
+        sessionStorage.removeItem('acai_admin_session');
+        pin = '';
+        showLogin();
+      } else {
+        showMain();
+      }
+    })
+    .catch(() => showMain()); // servidor offline — confia na sessão por ora
+} else {
+  showLogin();
+}
 
 // Toggle mostrar/ocultar senha
 document.getElementById('btn-toggle-pass')?.addEventListener('click', () => {
