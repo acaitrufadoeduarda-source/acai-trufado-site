@@ -1302,18 +1302,29 @@ function escHtml(s = '') {
 }
 
 /* ── Auto-restore: reabre tracking se cliente recarregar página ── */
-(function restoreActiveOrder() {
+(async function restoreActiveOrder() {
   const savedId = localStorage.getItem('acai_active_order');
   if (!savedId) return;
 
-  const orders  = getOrders();
-  const order   = orders.find(o => o.id === savedId);
-  if (!order) { localStorage.removeItem('acai_active_order'); return; }
-
-  // Não reabre se já foi concluído ou cancelado
-  if (['concluido', 'cancelado'].includes(order.status)) {
-    localStorage.removeItem('acai_active_order');
-    return;
+  // Verifica status real no servidor
+  try {
+    const r = await fetch(`${API_BASE}/api/orders/${savedId}`, { signal: AbortSignal.timeout(4000) });
+    if (r.ok) {
+      const serverOrder = await r.json();
+      if (!serverOrder || ['concluido', 'cancelado', 'entregue'].includes(serverOrder.status)) {
+        localStorage.removeItem('acai_active_order');
+        activeOrderId = null;
+        return;
+      }
+    }
+  } catch (_) {
+    // Se API falhar, checa localStorage como fallback
+    const orders = getOrders();
+    const order  = orders.find(o => o.id === savedId);
+    if (!order || ['concluido', 'cancelado'].includes(order.status)) {
+      localStorage.removeItem('acai_active_order');
+      return;
+    }
   }
 
   activeOrderId = savedId;
