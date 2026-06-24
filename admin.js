@@ -1065,12 +1065,20 @@ async function apiFetch(method, path, body = null, overridePin = null) {
   const opts = {
     method,
     headers: {
-      'Content-Type': 'application/json',
-      'x-admin-pin':  overridePin ?? pin,
+      'Content-Type':  'application/json',
+      'x-admin-token': overridePin ?? pin,
     },
   };
   if (body) opts.body = JSON.stringify(body);
-  return fetch(`${API_BASE}${path}`, opts);
+  const res = await fetch(`${API_BASE}${path}`, opts);
+  if (res.status === 401) {
+    stopPolling();
+    pin = null;
+    sessionStorage.removeItem('acai_admin_session');
+    showLogin();
+    throw new Error('Sessão expirada');
+  }
+  return res;
 }
 
 function formatTime(ts) {
