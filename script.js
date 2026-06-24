@@ -2,6 +2,7 @@
    AÇAÍ TRUFADO — script.js
    Framer Motion (Motion 11) via CDN + toda a lógica da página
 ════════════════════════════════════════════════════════════ */
+const API_BASE = 'https://acai-trufado-api.onrender.com';
 
 import { animate, stagger, inView, spring }
   from 'https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm';
@@ -857,7 +858,7 @@ async function openPixStep(customerName, customerPhone) {
   // Tenta chamar backend Mercado Pago (Next.js em :3000)
   let pixCode;
   try {
-    const res = await fetch(`http://localhost:3000/api/orders`, {
+    const res = await fetch(`${API_BASE}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order),
@@ -878,6 +879,9 @@ async function openPixStep(customerName, customerPhone) {
   const orders = getOrders();
   orders.unshift(order);
   saveOrders(orders);
+
+  // Solicita permissão e registra push após pedido criado
+  subscribePush(order.customerPhone || order.phone || '');
 
   // Renderiza tela PIX
   document.getElementById('pix-total-display').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
@@ -937,7 +941,7 @@ async function checkPayment(orderId) {
   let status;
   // Tenta backend primeiro
   try {
-    const res = await fetch(`http://localhost:3000/api/orders/${orderId}`, { signal: AbortSignal.timeout(2000) });
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}`, { signal: AbortSignal.timeout(2000) });
     if (res.ok) { const d = await res.json(); status = d.status; }
   } catch { /* usa localStorage */ }
 
@@ -1096,7 +1100,7 @@ function startTrackingPoll(orderId) {
   pollInterval = setInterval(async () => {
     let status;
     try {
-      const res = await fetch(`http://localhost:3000/api/orders/${orderId}`, { signal: AbortSignal.timeout(2000) });
+      const res = await fetch(`${API_BASE}/api/orders/${orderId}`, { signal: AbortSignal.timeout(2000) });
       if (res.ok) { const d = await res.json(); status = d.status; }
     } catch { /* usa localStorage */ }
 
@@ -1326,4 +1330,38 @@ function escHtml(s = '') {
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
+}
+
+async function subscribePush(userId) {
+  if (!userId || !('Notification' in window) || !('serviceWorker' in navigator)) return;
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    const reg = await navigator.serviceWorker.ready;
+
+    const keyRes = await fetch(`${API_BASE}/api/push/vapid-public-key`);
+    const { key } = await keyRes.json();
+    if (!key) return;
+
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key),
+    });
+
+    await fetch(`${API_BASE}/api/push/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, subscription: sub }),
+    });
+  } catch (e) {
+    console.warn('Push subscribe falhou:', e);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
