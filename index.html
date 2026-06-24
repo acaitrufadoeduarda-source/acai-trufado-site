@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Açaí Trufado — Eduarda</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <canvas id="particle-canvas"></canvas>
+
+  <nav id="navbar">
+    <a href="#" class="nav-logo">
+      <span class="brand">AÇAÍ</span>
+      <span class="sub">TRUFADO</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="#cremes"  class="link">Cardápio</a>
+      <a href="#sobre"   class="link">Sobre</a>
+      <a href="#contato" class="link">Contato</a>
+      <a href="#pedido"  class="cta-btn">Fazer Pedido</a>
+    </div>
+
+    <button class="burger" id="burger" aria-label="Abrir menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="mobile-menu" id="mobile-menu">
+      <a href="#cremes"  class="link"    onclick="closeMenu()">Cardápio</a>
+      <a href="#sobre"   class="link"    onclick="closeMenu()">Sobre</a>
+      <a href="#contato" class="link"    onclick="closeMenu()">Contato</a>
+      <a href="#pedido"  class="cta-btn" onclick="closeMenu()">FAZER PEDIDO →</a>
+    </div>
+  </nav>
+
+  <section id="hero">
+    <div class="hero-nebula"></div>
+
+    <span class="sparkle" style="left:8%;top:20%;color:var(--gold);animation-delay:0s">★</span>
+    <span class="sparkle" style="left:88%;top:15%;color:var(--primary);animation-delay:.6s">★</span>
+    <span class="sparkle" style="left:5%;top:65%;color:var(--primary);animation-delay:1.2s">★</span>
+    <span class="sparkle" style="left:92%;top:60%;color:var(--gold);animation-delay:.3s">★</span>
+    <span class="sparkle" style="left:15%;top:82%;color:var(--gold);animation-delay:1.8s">★</span>
+    <span class="sparkle" style="left:80%;top:78%;color:var(--primary);animation-delay:.9s">★</span>
+    <span class="sparkle" style="left:50%;top:10%;color:var(--gold);animation-delay:1.4s">★</span>
+
+    <div class="hero-content" id="hero-content">
+      <div class="eyebrow">Açaí Trufado No Pote</div>
+
+      <div class="hero-bg-text">AÇAÍ</div>
+
+      <div class="hero-product-showcase">
+        <button class="nav-arrow prev-arrow" id="prev-acai" aria-label="Anterior">←</button>
+        <img src="" alt="Açaí Trufado" id="acai-3d-img" class="floating-acai" style="display:none" />
+        <button class="nav-arrow next-arrow" id="next-acai" aria-label="Próximo">→</button>
+      </div>
+
+      <div class="product-info">
+        <h2 class="hero-h2 gold-text" id="acai-name">Chocolate Belga</h2>
+        <p class="hero-sub">Cremes trufados artesanais · Pote na medida certa</p>
+      </div>
+
+      <div class="cta-group">
+        <button class="btn-primary" id="btn-montar-hero">🍫 Montar Meu Pote</button>
+        <button class="btn-outline" onclick="location.href='#cremes'">Ver Cardápio</button>
+      </div>
+    </div>
+
+    <div class="scroll-cue">
+      <span>Rolar</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <section id="stats" class="fade-section">
+    <div class="container-sm">
+      <div class="hr"></div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">400+</div>
+          <div class="stat-label">Potes entregues</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">4</div>
+          <div class="stat-label">Cremes trufados</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">4.9★</div>
+          <div class="stat-label">Avaliação</div>
+        </div>
+      </div>
+      <div class="hr-strong"></div>
+    </div>
+  </section>
+
+  <section id="cremes" class="fade-section">
+    <div class="container">
+      <div class="section-header-center">
+        <span class="section-eyebrow">— Nosso carro-chefe</span>
+        <h2 class="section-title">
+          Cremes Trufados<br>
+          <span class="gold-text">Artesanais</span>
+        </h2>
+      </div>
+      <div class="cards-grid" id="cremes-grid"></div>
+    </div>
+  </section>
+
+  <section id="etapas" class="fade-section">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="section-eyebrow">— Monte o seu</span>
+          <h2 class="section-title">4 etapas,<br>1 pote perfeito</h2>
+        </div>
+        <a href="#pedido" class="link-small">Começar agora →</a>
+      </div>
+      <div class="cards-grid" id="etapas-grid"></div>
+    </div>
+  </section>
+
+  <div id="terrain-wrap">
+    <canvas id="terrain-canvas"></canvas>
+    <div class="terrain-line"></div>
+  </div>
+
+  <section id="sobre" class="fade-section">
+    <div class="container-sm" style="display:flex;flex-direction:column;gap:1.25rem">
+
+      <div class="glass-card story-card">
+        <div class="story-inner">
+          <div class="story-icon">⚡</div>
+          <div>
+            <div class="story-tag">Pagamento</div>
+            <div class="story-title">Pix instantâneo e seguro</div>
+            <p class="story-desc">QR Code gerado na hora. A confirmação é automática via webhook — zero risco de comprovante falso. Seu pote começa a ser preparado assim que o Pix cai.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card story-card">
+        <div class="story-inner">
+          <div class="story-icon">📍</div>
+          <div>
+            <div class="story-tag">Retirada</div>
+            <div class="story-title">Acompanhe ao vivo e busque no horário</div>
+            <p class="story-desc">Você recebe atualização em tempo real. Quando o status mudar para <strong>Pronto</strong>, é só chamar um mototaxi e buscar.</p>
+            <div class="status-row">
+              <span class="status-tag">Recebido</span>
+              <span class="status-tag">Preparando</span>
+              <span class="status-tag active">Pronto 🍫</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="cta" class="fade-section">
+    <div class="cta-blob"></div>
+    <div class="cta-inner">
+      <div class="cta-icon">🍫</div>
+      <span class="cta-eyebrow">— Pronto para começar?</span>
+      <h2 class="cta-title">Seu açaí trufado<br><span class="gold-text">em minutos.</span></h2>
+      <p class="cta-sub">Monte, pague via Pix, acompanhe ao vivo.</p>
+      <button class="btn-cta" id="btn-montar-cta">🍫 Montar Meu Pote →</button>
+    </div>
+  </section>
+
+  <footer id="contato">
+    <div class="footer-logo">
+      <span class="brand">AÇAÍ</span>
+      <span class="sub">TRUFADO</span>
+    </div>
+    <span class="footer-copy">© 2026 Eduarda Almeida · Todos os direitos reservados</span>
+    <a href="/admin" class="footer-admin">Admin →</a>
+  </footer>
+
+  <!-- ── Modal de Personalização do Pedido ────────────────────── -->
+  <div id="order-overlay" class="order-overlay hidden" aria-modal="true" role="dialog">
+    <div class="order-sheet" id="order-sheet">
+
+      <!-- Topo: imagem + nome do produto -->
+      <div class="order-hero" id="order-hero">
+        <img id="order-hero-img" class="order-hero-img hidden" alt="" />
+        <div id="order-hero-emoji" class="order-hero-emoji">🍧</div>
+        <div class="order-hero-gradient"></div>
+        <button type="button" class="order-close" id="order-close" aria-label="Fechar">×</button>
+        <div class="order-hero-info">
+          <h2 class="order-product-name" id="order-product-name"></h2>
+          <p class="order-product-desc" id="order-product-desc"></p>
+        </div>
+      </div>
+
+      <!-- Corpo: grupos de acompanhamentos -->
+      <div class="order-body" id="order-body"></div>
+
+      <!-- Rodapé fixo: total + confirmar -->
+      <div class="order-footer">
+        <div class="order-footer-total">
+          <span class="order-footer-label">Total do pedido</span>
+          <span class="order-footer-value" id="order-total-val">R$ 0,00</span>
+        </div>
+        <button type="button" class="order-confirm-btn" id="order-confirm">
+          Confirmar Pedido →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Etapa 2: Entrega + Dados ───────────────────────────────── -->
+  <div id="delivery-overlay" class="order-overlay hidden" aria-modal="true" role="dialog">
+    <div class="order-sheet">
+
+      <div class="step-header">
+        <button type="button" class="step-back-btn" id="delivery-back">←</button>
+        <div class="step-pills">
+          <span class="step-pill done">1</span>
+          <span class="step-line"></span>
+          <span class="step-pill active">2</span>
+          <span class="step-line"></span>
+          <span class="step-pill">3</span>
+        </div>
+        <button type="button" class="order-close sm" id="delivery-close">×</button>
+      </div>
+
+      <div class="step-body">
+        <h3 class="step-title">Como você vai receber?</h3>
+
+        <div class="delivery-options">
+          <button type="button" class="delivery-opt" data-method="retirada" id="opt-retirada">
+            <span class="delivery-opt-icon">🏠</span>
+            <span class="delivery-opt-texts">
+              <strong>Retirar no Local</strong>
+              <small>Busco quando estiver pronto</small>
+            </span>
+            <span class="delivery-check">✓</span>
+          </button>
+          <button type="button" class="delivery-opt" data-method="motoboy" id="opt-motoboy">
+            <span class="delivery-opt-icon">🛵</span>
+            <span class="delivery-opt-texts">
+              <strong>Solicitar Motoboy</strong>
+              <small>Te aviso para chamar quando pronto</small>
+            </span>
+            <span class="delivery-check">✓</span>
+          </button>
+        </div>
+
+        <div class="step-fields">
+          <div class="step-field">
+            <label class="step-field-label">Seu nome *</label>
+            <input type="text" id="customer-name" class="step-input" placeholder="Como posso te chamar?" maxlength="60" autocomplete="name" />
+          </div>
+          <div class="step-field">
+            <label class="step-field-label">WhatsApp *</label>
+            <input type="tel" id="customer-phone" class="step-input" placeholder="(00) 00000-0000" maxlength="20" autocomplete="tel" />
+          </div>
+          <p class="step-error hidden" id="delivery-error">⚠ Preencha nome, WhatsApp e escolha como receber.</p>
+        </div>
+      </div>
+
+      <div class="order-footer">
+        <div class="order-footer-total">
+          <span class="order-footer-label">Total</span>
+          <span class="order-footer-value" id="delivery-total-val">R$ 0,00</span>
+        </div>
+        <button type="button" class="order-confirm-btn" id="delivery-next">
+          💳 Pagar via PIX →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Etapa 3: PIX ─────────────────────────────────────────── -->
+  <div id="pix-overlay" class="order-overlay hidden" aria-modal="true" role="dialog">
+    <div class="order-sheet">
+
+      <div class="step-header">
+        <button type="button" class="step-back-btn" id="pix-back">←</button>
+        <div class="step-pills">
+          <span class="step-pill done">1</span>
+          <span class="step-line"></span>
+          <span class="step-pill done">2</span>
+          <span class="step-line"></span>
+          <span class="step-pill active">3</span>
+        </div>
+        <div style="width:32px"></div>
+      </div>
+
+      <div class="pix-body">
+        <div class="pix-header">
+          <div class="pix-logo">PIX</div>
+          <div class="pix-total" id="pix-total-display">R$ 0,00</div>
+          <p class="pix-sub">Escaneie o QR Code ou copie o código</p>
+        </div>
+
+        <div class="pix-qr-wrap">
+          <canvas id="pix-qr-canvas" class="pix-qr-canvas" width="200" height="200"></canvas>
+        </div>
+
+        <div class="pix-copy-wrap">
+          <code class="pix-code-txt" id="pix-code-text">Gerando código PIX...</code>
+          <button type="button" class="pix-copy-btn" id="pix-copy-btn">📋 Copiar</button>
+        </div>
+
+        <div class="pix-waiting" id="pix-waiting">
+          <span class="pix-pulse"></span>
+          Aguardando pagamento...
+        </div>
+
+        <p class="pix-info-txt">
+          Após pagar, seu pedido entra automaticamente na fila 🍧<br>
+          <span class="pix-timer-txt">Código expira em <span id="pix-timer">10:00</span></span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Etapa 4: Acompanhar Pedido ──────────────────────────── -->
+  <div id="tracking-overlay" class="order-overlay hidden" aria-modal="true" role="dialog">
+    <div class="order-sheet">
+
+      <div class="step-header" style="justify-content:space-between">
+        <span class="step-label-title">Acompanhar Pedido</span>
+        <button type="button" class="order-close sm" id="tracking-close">×</button>
+      </div>
+
+      <div class="tracking-body">
+        <div class="tracking-id-row">
+          Pedido <span class="tracking-id" id="tracking-id-num">#---</span>
+        </div>
+
+        <!-- Stepper de status -->
+        <div class="tracking-stepper" id="tracking-stepper"></div>
+
+        <!-- Card de status atual -->
+        <div class="tracking-status-card" id="tracking-status-card">
+          <div class="tracking-status-icon" id="tracking-status-icon">⏳</div>
+
+          <!-- Animação pote — visível só em status preparando -->
+          <div class="pote-anim hidden" id="pote-anim">
+            <div class="pote-wrap">
+              <div class="pote-outer">
+                <div class="layer layer-acai"></div>
+                <div class="layer layer-choc"></div>
+                <div class="layer layer-cream"></div>
+                <div class="pote-shine"></div>
+                <div class="pote-shine2"></div>
+              </div>
+              <div class="topping">
+                <div class="top-dot td1"></div>
+                <div class="top-dot td2"></div>
+                <div class="top-dot td3"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tracking-status-msg" id="tracking-status-msg">Aguardando pagamento</div>
+          <div class="tracking-status-sub" id="tracking-status-sub">Conclua o pagamento via PIX</div>
+        </div>
+
+        <!-- Resumo do pedido -->
+        <div class="tracking-summary-box">
+          <div class="tracking-prod-name" id="tracking-prod-name"></div>
+          <div class="tracking-sel-list" id="tracking-sel-list"></div>
+          <div class="tracking-meta" id="tracking-meta"></div>
+        </div>
+      </div>
+
+      <div class="order-footer" id="tracking-footer">
+        <button type="button" class="order-back-btn" id="tracking-show-pix" style="display:none">
+          💳 Ver código PIX
+        </button>
+        <a
+          href="https://wa.me/5584987533833?text=Ol%C3%A1%20Eduarda%2C%20preciso%20de%20ajuda%20com%20meu%20pedido!"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-whatsapp"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.116 1.526 5.845L0 24l6.335-1.502A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.369l-.36-.214-3.727.883.916-3.618-.235-.372A9.818 9.818 0 1112 21.818z"/></svg>
+          Precisa de ajuda?
+        </a>
+        <button type="button" class="order-confirm-btn" id="tracking-new-order">
+          🍧 Fazer novo pedido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bolinha flutuante do pedido ativo -->
+  <button id="order-fab" class="order-fab hidden" aria-label="Ver meu pedido">
+    <div class="order-fab-ring"></div>
+    <span class="order-fab-emoji" id="order-fab-emoji">🍧</span>
+    <div class="order-fab-badge" id="order-fab-badge">
+      <span class="order-fab-dot"></span>
+      <span class="order-fab-txt" id="order-fab-txt">Pedido</span>
+    </div>
+  </button>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
