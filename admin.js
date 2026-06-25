@@ -101,7 +101,7 @@ if (savedSession) {
         showMain();
       }
     })
-    .catch(() => showMain()); // servidor offline — confia na sessão por ora
+    .catch(() => showLogin()); // servidor offline — exige login (não confia na sessão cega)
 } else {
   showLogin();
 }
@@ -640,7 +640,7 @@ function buildCard(order) {
     if (!g.options?.length) return;
     const line = document.createElement('div');
     line.className = 'order-sel-line';
-    line.innerHTML = `<strong>${escHtml(g.groupName)}:</strong> ${g.options.map(o => (o.qty > 1 ? o.qty + '× ' : '') + o.name).join(', ')}`;
+    line.innerHTML = `<strong>${escHtml(g.groupName)}:</strong> ${g.options.map(o => escHtml((o.qty > 1 ? o.qty + '× ' : '') + o.name)).join(', ')}`;
     selList.appendChild(line);
   });
 

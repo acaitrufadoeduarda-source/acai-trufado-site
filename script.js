@@ -887,10 +887,11 @@ async function openPixStep(customerName, customerPhone) {
       body: JSON.stringify({
         customerName:   order.customerName,
         customerPhone:  order.customerPhone,
+        productId:      order.product?.id ?? null,
         productName:    order.product?.name ?? order.productName ?? '',
         summary:        order.summary,
         deliveryMethod: order.deliveryMethod,
-        total:          order.total,
+        // total NÃO é mais enviado — o servidor recalcula (evita manipulação de preço)
       }),
       signal: AbortSignal.timeout(8000),
     });
@@ -1082,7 +1083,7 @@ function openTracking(orderId) {
   const selList = document.getElementById('tracking-sel-list');
   selList.innerHTML = (order.summary || []).map(g => {
     if (g.options) {
-      return `<div class="tracking-sel-line"><strong>${escHtml(g.groupName)}:</strong> ${g.options.map(o => (o.qty > 1 ? o.qty + '× ' : '') + o.name).join(', ')}</div>`;
+      return `<div class="tracking-sel-line"><strong>${escHtml(g.groupName)}:</strong> ${g.options.map(o => escHtml((o.qty > 1 ? o.qty + '× ' : '') + o.name)).join(', ')}</div>`;
     }
     return `<div class="tracking-sel-line"><strong>${escHtml(g.label || g.groupName || '')}:</strong> ${escHtml(g.value || '')}</div>`;
   }).join('');
