@@ -462,6 +462,39 @@
     </div>
   </div>
 
+  <!-- Modal notificações bloqueadas -->
+  <div id="notif-blocked-modal" class="pwa-modal hidden" role="dialog" aria-modal="true">
+    <div class="pwa-backdrop" id="notif-blocked-backdrop"></div>
+    <div class="pwa-sheet">
+      <div class="pwa-icon" style="font-size:2rem">🔔</div>
+      <h2 class="pwa-title">Ativar notificações</h2>
+      <p class="pwa-sub">Siga os passos abaixo para receber atualizações do seu pedido:</p>
+
+      <!-- Chrome Android -->
+      <div id="notif-steps-android" class="pwa-steps hidden">
+        <div class="pwa-step"><span class="pwa-num">1</span><span>Toque no ícone de <strong>cadeado 🔒</strong> na barra de endereço</span></div>
+        <div class="pwa-step"><span class="pwa-num">2</span><span>Toque em <strong>"Permissões"</strong></span></div>
+        <div class="pwa-step"><span class="pwa-num">3</span><span>Em <strong>Notificações</strong>, selecione <strong>"Permitir"</strong></span></div>
+        <div class="pwa-step"><span class="pwa-num">4</span><span>Recarregue a página e toque no sino novamente 🔔</span></div>
+      </div>
+
+      <!-- Safari iOS -->
+      <div id="notif-steps-ios" class="pwa-steps hidden">
+        <div class="pwa-step"><span class="pwa-num">1</span><span>Abra <strong>Ajustes</strong> do iPhone</span></div>
+        <div class="pwa-step"><span class="pwa-num">2</span><span>Vá em <strong>Safari → Sites → Notificações</strong></span></div>
+        <div class="pwa-step"><span class="pwa-num">3</span><span>Encontre este site e selecione <strong>"Permitir"</strong></span></div>
+        <div class="pwa-step"><span class="pwa-num">4</span><span>Volte ao site e toque no sino novamente 🔔</span></div>
+      </div>
+
+      <!-- Pedir permissão (primeira vez) -->
+      <div id="notif-request-div" class="hidden">
+        <button id="notif-request-btn" class="pwa-btn-install">🔔 Ativar notificações</button>
+      </div>
+
+      <button id="notif-blocked-close" class="pwa-btn-close">Fechar</button>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
   <script type="module" src="script.js"></script>
 </body>

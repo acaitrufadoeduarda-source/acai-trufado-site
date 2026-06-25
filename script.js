@@ -1271,20 +1271,50 @@ window.triggerOrder = triggerOrder; // exposto para onclick no HTML
     }
   }
 
-  btn.addEventListener('click', async () => {
-    if (Notification.permission === 'denied') {
-      alert('Notificações estão bloqueadas.\nVá em Configurações do navegador → Privacidade → Notificações e libere este site.');
-      return;
-    }
-    if (Notification.permission === 'granted') {
-      // Já ativo — informa que está funcionando
-      new Notification('🍧 Açaí Trufado', { body: 'Você já está recebendo notificações de pedido!' });
-      return;
-    }
-    // Solicita permissão
+  // Modal de ajuda para notificações bloqueadas / primeira vez
+  const notifModal    = document.getElementById('notif-blocked-modal');
+  const stepsAndroid  = document.getElementById('notif-steps-android');
+  const stepsIOS      = document.getElementById('notif-steps-ios');
+  const requestDiv    = document.getElementById('notif-request-div');
+  const requestBtn    = document.getElementById('notif-request-btn');
+  const closeNotif    = document.getElementById('notif-blocked-close');
+  const notifBackdrop = document.getElementById('notif-blocked-backdrop');
+
+  function closeNotifModal() { notifModal?.classList.add('hidden'); }
+  closeNotif?.addEventListener('click', closeNotifModal);
+  notifBackdrop?.addEventListener('click', closeNotifModal);
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  requestBtn?.addEventListener('click', async () => {
     const phone = localStorage.getItem('acai_customer_phone') || '';
     await subscribePush(phone);
+    closeNotifModal();
     updateUI();
+  });
+
+  btn.addEventListener('click', async () => {
+    const perm = Notification.permission;
+
+    if (perm === 'granted') {
+      new Notification('🍧 Açaí Trufado', { body: 'Notificações ativas! Você será avisado quando seu pedido mudar de status.' });
+      return;
+    }
+
+    if (perm === 'denied') {
+      // Mostra modal com passos para desbloquear
+      stepsAndroid?.classList.toggle('hidden', isIOS);
+      stepsIOS?.classList.toggle('hidden', !isIOS);
+      requestDiv?.classList.add('hidden');
+      notifModal?.classList.remove('hidden');
+      return;
+    }
+
+    // 'default' — pode pedir diretamente
+    stepsAndroid?.classList.add('hidden');
+    stepsIOS?.classList.add('hidden');
+    requestDiv?.classList.remove('hidden');
+    notifModal?.classList.remove('hidden');
   });
 
   updateUI();
