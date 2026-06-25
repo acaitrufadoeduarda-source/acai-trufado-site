@@ -546,10 +546,13 @@ function mapServerOrder(o) {
 }
 
 async function loadOrders() {
-  // Tenta o servidor primeiro — é a fonte de verdade (pedidos dos clientes)
+  // Endpoint conforme a aba: ativos x histórico — ambos vêm do servidor (Supabase),
+  // a fonte de verdade. Assim o histórico aparece em qualquer aparelho.
+  const endpoint = filtroAtivo === 'historico' ? '/api/orders/history' : '/api/orders';
+
   let serverOrders = null;
   try {
-    const res = await apiFetch('GET', '/api/orders');
+    const res = await apiFetch('GET', endpoint);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data)) serverOrders = data.map(mapServerOrder);
@@ -557,18 +560,11 @@ async function loadOrders() {
   } catch { /* offline ou 401 — apiFetch já trata o 401 (mostra login) */ }
 
   if (serverOrders) {
-    // O endpoint /api/orders já retorna só os ativos (sem concluído/cancelado).
-    // Para o histórico, usamos o localStorage como complemento.
-    if (filtroAtivo === 'historico') {
-      const todos = getOrders();
-      renderOrders(todos.filter(o => ['concluido','cancelado'].includes(o.status)));
-    } else {
-      renderOrders(serverOrders);
-    }
+    renderOrders(serverOrders);
     return;
   }
 
-  // Fallback: servidor não respondeu — usa localStorage
+  // Fallback: servidor não respondeu — usa localStorage do aparelho
   const todos = getOrders();
   const localOrders = filtroAtivo === 'historico'
     ? todos.filter(o => ['concluido','cancelado'].includes(o.status))
