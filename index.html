@@ -414,6 +414,39 @@
     </div>
   </button>
 
+  <!-- Modal instalar PWA -->
+  <div id="pwa-modal" class="pwa-modal hidden" role="dialog" aria-modal="true">
+    <div class="pwa-backdrop"></div>
+    <div class="pwa-sheet">
+      <div class="pwa-icon">🍧</div>
+      <h2 class="pwa-title">Instale e acompanhe seu pedido!</h2>
+      <p class="pwa-sub">Receba notificações quando seu açaí estiver pronto.</p>
+
+      <!-- iOS -->
+      <div id="pwa-ios" class="pwa-steps hidden">
+        <div class="pwa-step">
+          <span class="pwa-num">1</span>
+          <span>Toque em <strong>Compartilhar</strong> <span class="pwa-icon-inline">⬆️</span> na barra do Safari</span>
+        </div>
+        <div class="pwa-step">
+          <span class="pwa-num">2</span>
+          <span>Role e escolha <strong>"Adicionar à Tela de Início"</strong> ➕</span>
+        </div>
+        <div class="pwa-step">
+          <span class="pwa-num">3</span>
+          <span>Toque em <strong>"Adicionar"</strong> no canto superior direito 🎉</span>
+        </div>
+      </div>
+
+      <!-- Android -->
+      <div id="pwa-android" class="hidden">
+        <button id="pwa-install-btn" class="pwa-btn-install">📲 Instalar agora</button>
+      </div>
+
+      <button id="pwa-close" class="pwa-btn-close">Agora não</button>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
   <script type="module" src="script.js"></script>
 </body>

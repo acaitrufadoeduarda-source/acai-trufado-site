@@ -908,6 +908,9 @@ async function openPixStep(customerName, customerPhone) {
 
   // Começa a checar status a cada 5s
   startPolling(order.id);
+
+  // Sugere instalar o app após 8s (usuário já leu o QR code)
+  setTimeout(() => window.showPwaPrompt?.(), 8000);
 }
 
 // Botão copiar PIX
@@ -1380,3 +1383,67 @@ function urlBase64ToUint8Array(base64String) {
   const raw = atob(base64);
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
+
+/* ════════════════════════════════════════════════════════════
+   INSTALAR PWA — modal iOS / Android
+════════════════════════════════════════════════════════════ */
+(function initPwaPrompt() {
+  const modal      = document.getElementById('pwa-modal');
+  const iosSteps   = document.getElementById('pwa-ios');
+  const androidDiv = document.getElementById('pwa-android');
+  const installBtn = document.getElementById('pwa-install-btn');
+  const closeBtn   = document.getElementById('pwa-close');
+  const backdrop   = modal?.querySelector('.pwa-backdrop');
+
+  if (!modal) return;
+
+  // Não mostra se já está instalado como PWA
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  // Não mostra se o usuário já dispensou nos últimos 7 dias
+  const dismissed = parseInt(localStorage.getItem('pwa_dismissed') || '0');
+  if (Date.now() - dismissed < 7 * 24 * 60 * 60 * 1000) return;
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /android/i.test(navigator.userAgent);
+  let deferredPrompt = null;
+
+  function showModal() {
+    if (isIOS) {
+      iosSteps.classList.remove('hidden');
+    } else if (deferredPrompt) {
+      androidDiv.classList.remove('hidden');
+    } else {
+      return; // sem suporte — não mostra
+    }
+    modal.classList.remove('hidden');
+  }
+
+  function hideModal(remember = true) {
+    modal.classList.add('hidden');
+    if (remember) localStorage.setItem('pwa_dismissed', String(Date.now()));
+  }
+
+  closeBtn?.addEventListener('click', () => hideModal(true));
+  backdrop?.addEventListener('click', () => hideModal(true));
+
+  installBtn?.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    hideModal(outcome !== 'accepted');
+  });
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
+  window.addEventListener('appinstalled', () => hideModal(false));
+
+  // Mostra o modal após 40 seg ou quando fechar o modal do pedido (PIX pago)
+  const timer = setTimeout(() => showModal(), 40_000);
+
+  // Também expõe para ser chamado após pedido confirmado
+  window.showPwaPrompt = () => { clearTimeout(timer); showModal(); };
+})();
