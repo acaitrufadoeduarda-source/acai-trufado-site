@@ -112,7 +112,29 @@ async function loadCarousel() {
   renderCremes();
 }
 
-loadCarousel();
+/* ════════════════════════════════════════════════════════════
+   SPLASH — esconde quando o carrossel/foto estiverem prontos
+════════════════════════════════════════════════════════════ */
+function hideSplash() {
+  const splash = document.getElementById('splash');
+  if (!splash || splash.classList.contains('hide')) return;
+  splash.classList.add('hide');
+  setTimeout(() => splash.remove(), 600);
+}
+
+// Esconde o splash quando o carrossel resolver E a 1ª foto realmente pintar.
+loadCarousel().then(async () => {
+  if (imgEl && imgEl.src && imgEl.style.display !== 'none') {
+    try {
+      if (!imgEl.complete) await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
+      if (imgEl.decode) await imgEl.decode().catch(() => {});
+    } catch { /* segue mesmo assim */ }
+  }
+  hideSplash();
+});
+
+// Rede de segurança: nunca deixa o splash travado mais que 6s
+setTimeout(hideSplash, 6000);
 
 btnPrev.addEventListener('click', () => changeProduct(-1));
 btnNext.addEventListener('click', () => changeProduct(1));
