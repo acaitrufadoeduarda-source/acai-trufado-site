@@ -1226,6 +1226,8 @@ function triggerOrder() {
   openOrderModal(activeProducts[currentIndex] || activeProducts[0]);
 }
 
+window.triggerOrder = triggerOrder; // exposto para onclick no HTML
+
 document.getElementById('btn-montar-hero')?.addEventListener('click', triggerOrder);
 document.getElementById('btn-montar-cta')?.addEventListener('click',  triggerOrder);
 

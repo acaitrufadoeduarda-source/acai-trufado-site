@@ -32,7 +32,7 @@
       <a href="#cremes"  class="link">Cardápio</a>
       <a href="#sobre"   class="link">Sobre</a>
       <a href="#contato" class="link">Contato</a>
-      <a href="#pedido"  class="cta-btn">Fazer Pedido</a>
+      <a href="#" class="cta-btn" onclick="event.preventDefault();triggerOrder()">Fazer Pedido</a>
     </div>
 
     <button class="burger" id="burger" aria-label="Abrir menu">
@@ -45,7 +45,7 @@
       <a href="#cremes"  class="link"    onclick="closeMenu()">Cardápio</a>
       <a href="#sobre"   class="link"    onclick="closeMenu()">Sobre</a>
       <a href="#contato" class="link"    onclick="closeMenu()">Contato</a>
-      <a href="#pedido"  class="cta-btn" onclick="closeMenu()">FAZER PEDIDO →</a>
+      <a href="#" class="cta-btn" onclick="event.preventDefault();closeMenu();triggerOrder()">FAZER PEDIDO →</a>
     </div>
   </nav>
 
