@@ -44,6 +44,7 @@ let acaiImages = [];
 let currentIndex = 0;
 const imgEl  = document.getElementById('acai-3d-img');
 const nameEl = document.getElementById('acai-name');
+const priceEl = document.getElementById('acai-price');
 const btnPrev = document.getElementById('prev-acai');
 const btnNext = document.getElementById('next-acai');
 
@@ -58,6 +59,14 @@ function setCarouselItem(idx) {
     imgEl.style.display = 'none';
   }
   nameEl.textContent = item.name;
+  if (priceEl) {
+    if (item.price > 0) {
+      priceEl.textContent = `R$ ${Number(item.price).toFixed(2).replace('.', ',')}`;
+      priceEl.classList.remove('hidden');
+    } else {
+      priceEl.classList.add('hidden');
+    }
+  }
 }
 
 async function changeProduct(direction) {
@@ -93,7 +102,7 @@ async function loadCarousel() {
           id: p.id, name: p.name, desc: p.description, price: Number(p.price) || 0,
           imageBase64: p.image_base64, active: p.active, groups: p.groups || []
         }));
-        acaiImages = products.map(p => ({ src: p.image_base64 || null, name: p.name }));
+        acaiImages = products.map(p => ({ src: p.image_base64 || null, name: p.name, price: Number(p.price) || 0 }));
         currentIndex = 0;
         setCarouselItem(0);
         if (acaiImages.length < 2) {

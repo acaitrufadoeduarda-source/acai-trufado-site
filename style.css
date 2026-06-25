@@ -548,6 +548,16 @@ h2.hero-h2 {
   min-height: 1.15em;
 }
 
+.hero-price {
+  font-family: var(--swiss);
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: .6rem;
+  letter-spacing: -.01em;
+}
+.hero-price.hidden { display: none; }
+
 .hero-sub {
   font-family: var(--swiss);
   font-size: clamp(.95rem, 2.5vw, 1.1rem);
