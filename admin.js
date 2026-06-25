@@ -514,6 +514,12 @@ function buildCard(order) {
     btnPix.classList.remove('hidden');
     btnPix.addEventListener('click', () => changeOrderStatus(order.id, 'preparando'));
   }
+  if (order.status === 'pago') {
+    btnPix.classList.remove('hidden');
+    btnPix.textContent = '👨‍🍳 Iniciar Preparo';
+    btnPix.style.background = '#8b5cf6';
+    btnPix.addEventListener('click', () => changeOrderStatus(order.id, 'preparando'));
+  }
   if (order.status === 'preparando') {
     btnReady.classList.remove('hidden');
     btnReady.textContent = order.deliveryMethod === 'motoboy' ? '🎉 Pronto p/ Motoboy' : '🎉 Pronto p/ Retirar';
