@@ -591,6 +591,14 @@ input, button, textarea { font-family: inherit; }
   gap: .65rem;
 }
 .sidebar-logo-emoji { font-size: 1.6rem; }
+.sidebar-logo-img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 9px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(233,30,140,.45));
+}
 .sidebar-brand     { font-family: var(--mono); font-size: .75rem; letter-spacing: .18em; color: #fff; font-weight: 700; }
 .sidebar-brand-sub { font-family: var(--mono); font-size: .55rem; letter-spacing: .12em; color: var(--gold); }
 .sidebar-close-btn { background: transparent; border-color: transparent; color: var(--muted); }
