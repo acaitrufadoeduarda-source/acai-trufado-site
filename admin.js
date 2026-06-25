@@ -1137,6 +1137,36 @@ function blobToDataURL(blob) {
   });
 }
 
+// Detecta se a imagem JÁ tem fundo transparente (analisa as bordas)
+function jaSemFundo(dataURL) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) return resolve(false);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      let data;
+      try { data = ctx.getImageData(0, 0, w, h).data; }
+      catch { return resolve(false); }
+      // amostra os pixels da borda da imagem
+      const pts = [];
+      const step = Math.max(1, Math.floor(Math.min(w, h) / 25));
+      for (let x = 0; x < w; x += step) { pts.push([x, 0], [x, h - 1]); }
+      for (let y = 0; y < h; y += step) { pts.push([0, y], [w - 1, y]); }
+      let transp = 0;
+      for (const [x, y] of pts) {
+        if (data[(y * w + x) * 4 + 3] < 25) transp++; // alpha quase zero
+      }
+      resolve(transp / pts.length > 0.6); // +60% da borda transparente
+    };
+    img.onerror = () => resolve(false);
+    img.src = dataURL;
+  });
+}
+
 inputFile.addEventListener('change', async () => {
   const file = inputFile.files[0];
   if (!file) return;
@@ -1147,7 +1177,14 @@ inputFile.addEventListener('change', async () => {
   imgPreview.classList.remove('hidden');
   imgPlaceholder.classList.add('hidden');
 
-  // 2) Remove o fundo automaticamente (roda no navegador)
+  // 2) Já está sem fundo? Pula a remoção (economiza tempo)
+  if (await jaSemFundo(original)) {
+    showToast('✨ Essa foto já está sem fundo!');
+    inputFile.value = '';
+    return;
+  }
+
+  // 3) Remove o fundo automaticamente (roda no navegador)
   imgRemovingOverlay.classList.remove('hidden');
   try {
     if (!bgRemovalLib) {
