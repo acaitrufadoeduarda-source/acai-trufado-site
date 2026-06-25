@@ -1302,7 +1302,7 @@ window.triggerOrder = triggerOrder; // exposto para onclick no HTML
     }
 
     if (perm === 'denied') {
-      // Mostra modal com passos para desbloquear
+      // Permissão bloqueada — mostra passos para desbloquear nas configurações
       stepsAndroid?.classList.toggle('hidden', isIOS);
       stepsIOS?.classList.toggle('hidden', !isIOS);
       requestDiv?.classList.add('hidden');
@@ -1310,11 +1310,10 @@ window.triggerOrder = triggerOrder; // exposto para onclick no HTML
       return;
     }
 
-    // 'default' — pode pedir diretamente
-    stepsAndroid?.classList.add('hidden');
-    stepsIOS?.classList.add('hidden');
-    requestDiv?.classList.remove('hidden');
-    notifModal?.classList.remove('hidden');
+    // 'default' — dispara o pedido de permissão nativo diretamente
+    const phone = localStorage.getItem('acai_customer_phone') || '';
+    await subscribePush(phone);
+    updateUI();
   });
 
   updateUI();
