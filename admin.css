@@ -1041,6 +1041,61 @@ input, button, textarea { font-family: inherit; }
 }
 .btn-add-flavor:active { background: rgba(233,30,140,.16); }
 
+.btn-remove-global {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: rgba(239,68,68,.08);
+  border: 1px dashed rgba(239,68,68,.4);
+  color: #f87171;
+  font-family: var(--swiss);
+  font-weight: 600;
+  font-size: .88rem;
+  cursor: pointer;
+  transition: background .2s;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.btn-remove-global:active { background: rgba(239,68,68,.16); }
+
+/* Lista de ingredientes no modal global */
+.global-ing-list {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.global-ing-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .65rem 1rem;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: .88rem;
+}
+
+.global-ing-info { display: flex; flex-direction: column; gap: 2px; }
+.global-ing-name { color: #fff; font-weight: 600; }
+.global-ing-where { color: var(--muted); font-size: .76rem; }
+
+.global-ing-remove {
+  background: rgba(239,68,68,.15);
+  border: 1px solid rgba(239,68,68,.3);
+  color: #f87171;
+  border-radius: 8px;
+  padding: .3rem .7rem;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+}
+.global-ing-remove:hover { background: rgba(239,68,68,.3); }
+
 .btn-add-icon {
   font-size: 1.4rem;
   font-weight: 300;

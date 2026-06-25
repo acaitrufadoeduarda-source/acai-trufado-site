@@ -871,6 +871,86 @@ function toggleProduct(id) {
   showToast(p.active ? '✅ Sabor ativado' : '⏸ Sabor pausado');
 }
 
+/* ════════════════════════════════════════════════════════════
+   REMOVER INGREDIENTE GLOBAL
+════════════════════════════════════════════════════════════ */
+document.getElementById('btn-remove-global')?.addEventListener('click', openRemoveGlobalModal);
+document.getElementById('close-remove-global')?.addEventListener('click', () => {
+  document.getElementById('modal-remove-global').classList.add('hidden');
+});
+document.getElementById('modal-remove-global')?.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+});
+
+function openRemoveGlobalModal() {
+  const products = getProducts();
+  const list     = document.getElementById('global-ingredients-list');
+  const empty    = document.getElementById('global-ing-empty');
+  list.innerHTML = '';
+
+  // Coleta todos os ingredientes únicos (por nome, case-insensitive)
+  const map = new Map(); // nome_lower → { name, grupos: [{prodName, groupName}] }
+  for (const p of products) {
+    for (const g of (p.groups || [])) {
+      for (const opt of (g.options || [])) {
+        const key = opt.name.trim().toLowerCase();
+        if (!map.has(key)) map.set(key, { name: opt.name.trim(), where: [] });
+        map.get(key).where.push({ prodName: p.name, groupName: g.name });
+      }
+    }
+  }
+
+  if (map.size === 0) {
+    list.classList.add('hidden');
+    empty.classList.remove('hidden');
+  } else {
+    empty.classList.add('hidden');
+    list.classList.remove('hidden');
+
+    // Ordena A-Z
+    const sorted = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    for (const [key, { name, where }] of sorted) {
+      const sabores = [...new Set(where.map(w => w.prodName))];
+      const item = document.createElement('div');
+      item.className = 'global-ing-item';
+      item.innerHTML = `
+        <div class="global-ing-info">
+          <span class="global-ing-name">${escHtml(name)}</span>
+          <span class="global-ing-where">Em ${sabores.length} sabor${sabores.length > 1 ? 'es' : ''}: ${sabores.map(escHtml).join(', ')}</span>
+        </div>
+        <button class="global-ing-remove">Remover</button>`;
+
+      item.querySelector('.global-ing-remove').addEventListener('click', () => {
+        if (!confirm(`Remover "${name}" de todos os sabores?`)) return;
+        removeIngredientGlobal(key);
+        item.remove();
+        if (list.children.length === 0) {
+          list.classList.add('hidden');
+          empty.classList.remove('hidden');
+        }
+      });
+      list.appendChild(item);
+    }
+  }
+
+  document.getElementById('modal-remove-global').classList.remove('hidden');
+}
+
+function removeIngredientGlobal(nameKey) {
+  const products = getProducts().map(p => ({
+    ...p,
+    groups: (p.groups || []).map(g => ({
+      ...g,
+      options: (g.options || []).filter(o => o.name.trim().toLowerCase() !== nameKey),
+    })),
+  }));
+  saveProducts(products);
+  renderProducts();
+  // Atualiza sessionStorage
+  try { sessionStorage.setItem('acai_products_imgs', JSON.stringify(productsInMemory)); } catch {}
+  showToast(`✅ Ingrediente removido de todos os sabores!`);
+}
+
 /* ── Elementos do modal ──────────────────────────────────────── */
 const modalEl        = document.getElementById('modal-product');
 const btnNew         = document.getElementById('btn-new-product');
