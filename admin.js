@@ -1117,16 +1117,53 @@ modalEl.addEventListener('click', e => { if (e.target === modalEl) closeModal();
 imgPicker.addEventListener('click', () => inputFile.click());
 imgPicker.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') inputFile.click(); });
 
-inputFile.addEventListener('change', () => {
+// Overlay de "removendo fundo" dentro do picker
+const imgRemovingOverlay = document.createElement('div');
+imgRemovingOverlay.className = 'img-removing hidden';
+imgRemovingOverlay.innerHTML = '<div class="img-removing-spin"></div><span>✨ Removendo fundo…</span>';
+imgPicker.appendChild(imgRemovingOverlay);
+
+let bgRemovalLib = null; // cache do módulo
+
+function blobToDataURL(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.target.result);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
+inputFile.addEventListener('change', async () => {
   const file = inputFile.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    imgPreview.src = ev.target.result;
-    imgPreview.classList.remove('hidden');
-    imgPlaceholder.classList.add('hidden');
-  };
-  reader.readAsDataURL(file);
+
+  // 1) Mostra a foto original imediatamente (resposta rápida)
+  const original = await blobToDataURL(file);
+  imgPreview.src = original;
+  imgPreview.classList.remove('hidden');
+  imgPlaceholder.classList.add('hidden');
+
+  // 2) Remove o fundo automaticamente (roda no navegador)
+  imgRemovingOverlay.classList.remove('hidden');
+  try {
+    if (!bgRemovalLib) {
+      bgRemovalLib = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1/+esm');
+    }
+    const removeBackground = bgRemovalLib.removeBackground || bgRemovalLib.default?.removeBackground;
+    const resultBlob = await removeBackground(file);
+    const transparent = await blobToDataURL(resultBlob);
+    imgPreview.src = transparent; // PNG com fundo transparente
+    showToast('✨ Fundo removido!');
+  } catch (err) {
+    console.error('Falha ao remover fundo:', err);
+    showToast('ℹ️ Não deu pra remover o fundo — usando a foto original');
+    // mantém a foto original já carregada
+  } finally {
+    imgRemovingOverlay.classList.add('hidden');
+  }
+
+  inputFile.value = ''; // permite reenviar o mesmo arquivo
 });
 
 /* ── Grupos de acompanhamentos ───────────────────────────────── */
