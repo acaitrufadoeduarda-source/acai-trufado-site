@@ -1128,7 +1128,7 @@ let bgRemovalLib = null; // cache do módulo
 function blobToDataURL(blob) {
   return new Promise((res, rej) => {
     const r = new FileReader();
-    r.onload = () => res(r.target.result);
+    r.onload = () => res(r.result);
     r.onerror = rej;
     r.readAsDataURL(blob);
   });
