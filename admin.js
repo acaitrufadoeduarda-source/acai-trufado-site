@@ -654,13 +654,18 @@ function getProducts() {
 }
 
 function saveProducts(list) {
-  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(list));
-  // Sincroniza com Supabase em background
+  // Salva no servidor (fonte de verdade)
   fetch(`${API_BASE}/api/products`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'x-admin-token': pin },
     body: JSON.stringify(list),
   }).catch(() => {/* ignora falha de rede */});
+
+  // Cache local sem imagens (evita QuotaExceededError com base64 grandes)
+  try {
+    const semImagem = list.map(p => ({ ...p, imageBase64: null }));
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(semImagem));
+  } catch { localStorage.removeItem(PRODUCTS_KEY); }
 }
 
 async function loadProductsFromAPI() {
