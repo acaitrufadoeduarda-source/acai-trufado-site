@@ -1199,3 +1199,34 @@ function showToast(msg, duration = 3000) {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
 }
+
+/* ── Instalar PWA ──────────────────────────────────────────── */
+let installPrompt = null;
+const btnInstall  = document.getElementById('btn-install-app');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  if (btnInstall) btnInstall.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  if (btnInstall) btnInstall.classList.add('hidden');
+  installPrompt = null;
+  showToast('✅ App instalado com sucesso!');
+});
+
+if (btnInstall) {
+  btnInstall.addEventListener('click', async () => {
+    if (!installPrompt) {
+      showToast('ℹ️ Use o menu do navegador → "Adicionar à tela inicial"');
+      return;
+    }
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      installPrompt = null;
+      btnInstall.classList.add('hidden');
+    }
+  });
+}

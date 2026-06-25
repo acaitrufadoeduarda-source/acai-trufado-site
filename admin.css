@@ -685,6 +685,23 @@ input, button, textarea { font-family: inherit; }
 }
 .sidebar-btn-relatorio:hover { background: rgba(255,255,255,.09); color: #fff; }
 
+.sidebar-btn-install {
+  margin: .4rem .75rem .2rem;
+  padding: .7rem 1rem;
+  background: linear-gradient(135deg, rgba(233,30,140,.18), rgba(233,30,140,.08));
+  border: 1px solid rgba(233,30,140,.4);
+  border-radius: 10px;
+  color: #f472b6;
+  width: calc(100% - 1.5rem);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s, color .15s;
+}
+.sidebar-btn-install:hover { background: rgba(233,30,140,.25); color: #fff; }
+.sidebar-btn-install.hidden { display: none; }
+
 /* Controle da loja */
 .loja-control {
   padding: .5rem .75rem .2rem;
