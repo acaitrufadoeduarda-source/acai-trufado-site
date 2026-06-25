@@ -645,21 +645,25 @@ async function updateStatus(id, status, extra = {}) {
    Cada grupo: { id, name, required, min, max, options[{name,price}] }
 ════════════════════════════════════════════════════════════ */
 const PRODUCTS_KEY = 'acai_products';
-let editingId = null;
-let groups    = [];
+let editingId    = null;
+let groups       = [];
+let productsInMemory = null; // cache em memória com imagens
 
 function getProducts() {
+  if (productsInMemory !== null) return productsInMemory;
   try { return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || []; }
   catch { return []; }
 }
 
 function saveProducts(list) {
+  productsInMemory = list; // mantém imagens em memória
+
   // Salva no servidor (fonte de verdade)
   fetch(`${API_BASE}/api/products`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'x-admin-token': pin },
     body: JSON.stringify(list),
-  }).catch(() => {/* ignora falha de rede */});
+  }).catch(() => {});
 
   // Cache local sem imagens (evita QuotaExceededError com base64 grandes)
   try {
@@ -670,15 +674,13 @@ function saveProducts(list) {
 
 async function loadProductsFromAPI() {
   try {
-    // Busca todos os produtos (ativos e pausados) via GET com token
     const res = await fetch(`${API_BASE}/api/products`, {
       headers: { 'x-admin-token': pin },
     });
     if (!res.ok) return;
     const data = await res.json();
     if (data.length > 0) {
-      // Converte formato API → formato local
-      const local = data.map(p => ({
+      productsInMemory = data.map(p => ({
         id:          p.id,
         name:        p.name,
         desc:        p.description,
@@ -686,7 +688,6 @@ async function loadProductsFromAPI() {
         active:      p.active,
         groups:      p.groups || [],
       }));
-      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(local));
       renderProducts();
     }
   } catch { /* ignora */ }
