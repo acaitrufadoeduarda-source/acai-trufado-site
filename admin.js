@@ -807,12 +807,22 @@ function getProducts() {
 function saveProducts(list) {
   productsInMemory = list; // mantém imagens em memória
 
-  // Salva no servidor (fonte de verdade)
+  // Salva no servidor (fonte de verdade) — e AVISA se falhar
   fetch(`${API_BASE}/api/products`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'x-admin-token': pin },
     body: JSON.stringify(list),
-  }).catch(() => {});
+  })
+    .then(async res => {
+      if (!res.ok) {
+        let msg = '';
+        try { msg = (await res.json()).error || ''; } catch {}
+        showToast(`⚠️ NÃO salvou no site! ${msg || 'Erro ' + res.status}. Tente de novo.`);
+      } else {
+        showToast('✅ Salvo e publicado no site!');
+      }
+    })
+    .catch(() => showToast('⚠️ Sem conexão — não salvou no site. Verifique a internet.'));
 
   // Cache local sem imagens (evita QuotaExceededError com base64 grandes)
   try {
