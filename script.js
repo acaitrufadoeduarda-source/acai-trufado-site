@@ -90,7 +90,7 @@ async function loadCarousel() {
       const products = await res.json();
       if (products.length > 0) {
         activeProducts = products.map(p => ({
-          id: p.id, name: p.name, desc: p.description,
+          id: p.id, name: p.name, desc: p.description, price: Number(p.price) || 0,
           imageBase64: p.image_base64, active: p.active, groups: p.groups || []
         }));
         acaiImages = products.map(p => ({ src: p.image_base64 || null, name: p.name }));
@@ -215,6 +215,7 @@ function renderCremes() {
           ? `<div class="card-product-img"><img src="${p.imageBase64}" alt="${p.name}" /></div>`
           : `<div class="card-emoji">🍧</div>`}
         <h3 class="card-title">${p.name}</h3>
+        ${p.price > 0 ? `<div class="card-price">R$ ${Number(p.price).toFixed(2).replace('.', ',')}</div>` : ''}
         <p class="card-desc">${p.desc || ''}</p>
         <div class="card-bar" style="background:linear-gradient(90deg,var(--primary),var(--gold))"></div>
         <button type="button" class="card-order-btn" data-order-id="${p.id}">🍫 Montar esse pote</button>`;
@@ -682,7 +683,7 @@ function renderOrderGroups() {
 
 /* ── Calcula e exibe o total ──────────────────────────────── */
 function updateOrderTotal() {
-  let total = 0;
+  let total = Number(orderProduct?.price) || 0; // valor base do açaí
   (orderProduct?.groups || []).forEach(g => {
     (g.options || []).forEach(o => {
       total += (orderSelections[g.id]?.[o.name] || 0) * (Number(o.price) || 0);
@@ -792,7 +793,7 @@ function buildSelectionsSummary() {
 }
 
 function calcTotal() {
-  let t = 0;
+  let t = Number(orderProduct?.price) || 0; // valor base do açaí
   (orderProduct?.groups || []).forEach(g =>
     (g.options || []).forEach(o => {
       t += (orderSelections[g.id]?.[o.name] || 0) * (Number(o.price) || 0);

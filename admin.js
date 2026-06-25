@@ -851,6 +851,7 @@ async function loadProductsFromAPI() {
         id:          p.id,
         name:        p.name,
         desc:        p.description,
+        price:       p.price || 0,
         imageBase64: p.image_base64,
         active:      p.active,
         groups:      p.groups || [],
@@ -904,6 +905,7 @@ function renderProducts() {
         </div>
         <div class="pc-body">
           <h3 class="pc-name">${escHtml(p.name)}</h3>
+          ${p.price > 0 ? `<span class="pc-price">R$ ${Number(p.price).toFixed(2).replace('.', ',')}</span>` : ''}
           ${p.desc ? `<p class="pc-desc">${escHtml(p.desc)}</p>` : ''}
           ${groupSummary}
         </div>
@@ -1102,6 +1104,7 @@ const btnSave        = document.getElementById('btn-save-product');
 const btnDelete      = document.getElementById('btn-delete-product');
 const inputName      = document.getElementById('prod-name');
 const inputDesc      = document.getElementById('prod-desc');
+const inputPrice     = document.getElementById('prod-price');
 const inputFile      = document.getElementById('prod-image');
 const inputActive    = document.getElementById('prod-active');
 const imgPicker      = document.getElementById('img-picker');
@@ -1307,6 +1310,7 @@ function openModal(id) {
     modalTitle.textContent = 'Editar Sabor';
     inputName.value        = p.name  || '';
     inputDesc.value        = p.desc  || '';
+    inputPrice.value       = p.price ? Number(p.price).toFixed(2) : '';
     inputActive.checked    = p.active !== false;
     groups = JSON.parse(JSON.stringify(p.groups || [])); // deep copy
     if (p.imageBase64) {
@@ -1323,6 +1327,7 @@ function openModal(id) {
     modalTitle.textContent = 'Novo Sabor';
     inputName.value        = '';
     inputDesc.value        = '';
+    inputPrice.value       = '';
     inputActive.checked    = true;
     inputFile.value        = '';
     imgPreview.src         = '';
@@ -1350,6 +1355,7 @@ btnSave.addEventListener('click', () => {
   const products   = getProducts();
   const currentImg = imgPreview.src && !imgPreview.classList.contains('hidden')
     ? imgPreview.src : null;
+  const price = parseFloat(String(inputPrice.value).replace(',', '.')) || 0;
 
   // Limpa grupos: remove opções vazias, remove grupos sem nome
   const cleanGroups = groups
@@ -1363,6 +1369,7 @@ btnSave.addEventListener('click', () => {
         ...products[idx],
         name,
         desc:       inputDesc.value.trim(),
+        price,
         imageBase64: currentImg ?? products[idx].imageBase64,
         active:     inputActive.checked,
         groups:     cleanGroups,
@@ -1373,6 +1380,7 @@ btnSave.addEventListener('click', () => {
       id:         uid(),
       name,
       desc:       inputDesc.value.trim(),
+      price,
       imageBase64: currentImg,
       active:     inputActive.checked,
       groups:     cleanGroups,

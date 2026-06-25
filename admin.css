@@ -1367,6 +1367,15 @@ input, button, textarea { font-family: inherit; }
   text-overflow: ellipsis;
 }
 
+.pc-price {
+  display: inline-block;
+  font-family: var(--swiss);
+  font-weight: 700;
+  font-size: .92rem;
+  color: var(--gold);
+  margin-bottom: .35rem;
+}
+
 .pc-desc {
   font-family: var(--swiss);
   font-size: .78rem;
@@ -1594,6 +1603,32 @@ input, button, textarea { font-family: inherit; }
 }
 
 .field-input::placeholder { color: rgba(255,255,255,.25); }
+
+/* Campo de valor (R$) */
+.price-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.price-input-prefix {
+  position: absolute;
+  left: 14px;
+  font-family: var(--swiss);
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--gold);
+  pointer-events: none;
+}
+.price-input { padding-left: 40px !important; font-weight: 700; }
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: .58rem;
+  letter-spacing: .04em;
+  color: var(--soft);
+  line-height: 1.4;
+}
 
 .field-textarea { line-height: 1.6; }
 

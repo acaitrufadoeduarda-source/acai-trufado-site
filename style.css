@@ -852,6 +852,15 @@ section {
   letter-spacing: -.02em;
 }
 
+.card-price {
+  display: inline-block;
+  font-family: var(--swiss);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: .5rem;
+}
+
 .card-desc {
   font-family: var(--swiss);
   font-size: .82rem;
