@@ -567,7 +567,7 @@ function buildCard(order) {
 /* ════════════════════════════════════════════════════════════
    WHATSAPP — monta mensagem e abre wa.me
 ════════════════════════════════════════════════════════════ */
-const SITE_URL = 'https://acai-trufado-eduarda.vercel.app';
+const SITE_URL = 'https://public-eta-eight-82.vercel.app';
 
 function abrirWhatsApp(order, tipo) {
   const phone = (order.customerPhone || '').replace(/\D/g, '');
