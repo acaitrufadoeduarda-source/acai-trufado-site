@@ -878,6 +878,9 @@ async function openPixStep(customerName, customerPhone) {
   orders.unshift(order);
   saveOrders(orders);
 
+  // Salva telefone para o sino poder reativar notificações depois
+  if (order.customerPhone) localStorage.setItem('acai_customer_phone', order.customerPhone);
+
   // Solicita permissão e registra push após pedido criado
   subscribePush(order.customerPhone || order.phone || '');
 
@@ -1230,6 +1233,62 @@ function triggerOrder() {
 }
 
 window.triggerOrder = triggerOrder; // exposto para onclick no HTML
+
+/* ════════════════════════════════════════════════════════════
+   SINO DE NOTIFICAÇÕES — navbar
+════════════════════════════════════════════════════════════ */
+(function initNotifBell() {
+  const btn      = document.getElementById('btn-notif');
+  const iconBell = document.getElementById('notif-icon-bell');
+  const iconOff  = document.getElementById('notif-icon-off');
+  const dot      = document.getElementById('notif-dot');
+
+  if (!btn || !('Notification' in window) || !('serviceWorker' in navigator)) {
+    btn?.style.setProperty('display', 'none');
+    return;
+  }
+
+  function updateUI() {
+    const perm = Notification.permission;
+    if (perm === 'granted') {
+      btn.classList.add('active');
+      iconBell.classList.remove('hidden');
+      iconOff.classList.add('hidden');
+      dot.classList.remove('hidden');
+      btn.title = 'Notificações ativas';
+    } else if (perm === 'denied') {
+      btn.classList.remove('active');
+      iconBell.classList.add('hidden');
+      iconOff.classList.remove('hidden');
+      dot.classList.add('hidden');
+      btn.title = 'Notificações bloqueadas — libere nas configurações do navegador';
+    } else {
+      btn.classList.remove('active');
+      iconBell.classList.remove('hidden');
+      iconOff.classList.add('hidden');
+      dot.classList.add('hidden');
+      btn.title = 'Ativar notificações de pedido';
+    }
+  }
+
+  btn.addEventListener('click', async () => {
+    if (Notification.permission === 'denied') {
+      alert('Notificações estão bloqueadas.\nVá em Configurações do navegador → Privacidade → Notificações e libere este site.');
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      // Já ativo — informa que está funcionando
+      new Notification('🍧 Açaí Trufado', { body: 'Você já está recebendo notificações de pedido!' });
+      return;
+    }
+    // Solicita permissão
+    const phone = localStorage.getItem('acai_customer_phone') || '';
+    await subscribePush(phone);
+    updateUI();
+  });
+
+  updateUI();
+})();
 
 document.getElementById('btn-montar-hero')?.addEventListener('click', triggerOrder);
 document.getElementById('btn-montar-cta')?.addEventListener('click',  triggerOrder);
