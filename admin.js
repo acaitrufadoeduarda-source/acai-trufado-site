@@ -804,14 +804,23 @@ function getProducts() {
   catch { return []; }
 }
 
-function saveProducts(list) {
-  productsInMemory = list; // mantém imagens em memória
+async function saveProducts(list) {
+  productsInMemory = list; // mostra imediato (com imagens originais)
+
+  // Comprime imagens grandes (>150KB) antes de enviar — evita "request entity too large"
+  const listComprimida = await Promise.all(list.map(async p => {
+    if (p.imageBase64 && p.imageBase64.length > 150_000) {
+      return { ...p, imageBase64: await compressImage(p.imageBase64) };
+    }
+    return p;
+  }));
+  productsInMemory = listComprimida; // memória passa a usar as versões leves
 
   // Salva no servidor (fonte de verdade) — e AVISA se falhar
   fetch(`${API_BASE}/api/products`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'x-admin-token': pin },
-    body: JSON.stringify(list),
+    body: JSON.stringify(listComprimida),
   })
     .then(async res => {
       if (!res.ok) {
@@ -820,13 +829,14 @@ function saveProducts(list) {
         showToast(`⚠️ NÃO salvou no site! ${msg || 'Erro ' + res.status}. Tente de novo.`);
       } else {
         showToast('✅ Salvo e publicado no site!');
+        try { sessionStorage.setItem('acai_products_imgs', JSON.stringify(listComprimida)); } catch {}
       }
     })
     .catch(() => showToast('⚠️ Sem conexão — não salvou no site. Verifique a internet.'));
 
   // Cache local sem imagens (evita QuotaExceededError com base64 grandes)
   try {
-    const semImagem = list.map(p => ({ ...p, imageBase64: null }));
+    const semImagem = listComprimida.map(p => ({ ...p, imageBase64: null }));
     localStorage.setItem(PRODUCTS_KEY, JSON.stringify(semImagem));
   } catch { localStorage.removeItem(PRODUCTS_KEY); }
 }
@@ -1177,6 +1187,28 @@ function jaSemFundo(dataURL) {
   });
 }
 
+// Redimensiona (máx 800px) e comprime — preserva transparência via WebP.
+// Reduz MUITO o tamanho, evitando "request entity too large" e deixando o site rápido.
+function compressImage(dataURL, maxSize = 800) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) return resolve(dataURL);
+      const scale = Math.min(1, maxSize / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      let out = c.toDataURL('image/webp', 0.85);     // WebP suporta transparência e é bem menor
+      if (!out.startsWith('data:image/webp')) out = c.toDataURL('image/png'); // fallback (iOS antigo)
+      resolve(out.length < dataURL.length ? out : dataURL); // usa o menor dos dois
+    };
+    img.onerror = () => resolve(dataURL);
+    img.src = dataURL;
+  });
+}
+
 inputFile.addEventListener('change', async () => {
   const file = inputFile.files[0];
   if (!file) return;
@@ -1187,8 +1219,9 @@ inputFile.addEventListener('change', async () => {
   imgPreview.classList.remove('hidden');
   imgPlaceholder.classList.add('hidden');
 
-  // 2) Já está sem fundo? Pula a remoção (economiza tempo)
+  // 2) Já está sem fundo? Pula a remoção (economiza tempo), mas comprime
   if (await jaSemFundo(original)) {
+    imgPreview.src = await compressImage(original);
     showToast('✨ Essa foto já está sem fundo!');
     inputFile.value = '';
     return;
@@ -1203,12 +1236,12 @@ inputFile.addEventListener('change', async () => {
     const removeBackground = bgRemovalLib.removeBackground || bgRemovalLib.default?.removeBackground;
     const resultBlob = await removeBackground(file);
     const transparent = await blobToDataURL(resultBlob);
-    imgPreview.src = transparent; // PNG com fundo transparente
+    imgPreview.src = await compressImage(transparent); // PNG transparente comprimido (WebP)
     showToast('✨ Fundo removido!');
   } catch (err) {
     console.error('Falha ao remover fundo:', err);
+    imgPreview.src = await compressImage(original); // comprime o original mesmo no fallback
     showToast('ℹ️ Não deu pra remover o fundo — usando a foto original');
-    // mantém a foto original já carregada
   } finally {
     imgRemovingOverlay.classList.add('hidden');
   }
