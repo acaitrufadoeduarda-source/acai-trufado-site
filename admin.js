@@ -210,23 +210,163 @@ function updateResumoHoje() {
   document.getElementById('resumo-fat').textContent = 'R$ ' + fat.toFixed(2).replace('.', ',');
 }
 
+/* ── Relatório com períodos + mais vendidos ──────────────────── */
+const REVENUE_STATUSES = ['pago', 'preparando', 'pronto', 'motoboy_a_caminho', 'concluido'];
+const REL_STATUS_LABEL = {
+  aguardando_pix: 'Aguardando PIX', pago: 'Pago', preparando: 'Preparando',
+  pronto: 'Pronto', motoboy_a_caminho: 'Motoboy a caminho', concluido: 'Entregue', cancelado: 'Cancelado',
+};
+let relPeriodo   = 'hoje';
+let relCustomFrom = null;
+let relCustomTo   = null;
+
+const brl = n => 'R$ ' + (Number(n) || 0).toFixed(2).replace('.', ',');
+
+function periodoRange(periodo) {
+  const now = new Date();
+  let from = new Date(now);
+  let to   = new Date(now);
+  to.setHours(23, 59, 59, 999);
+
+  if (periodo === 'hoje') {
+    from.setHours(0, 0, 0, 0);
+  } else if (periodo === 'semana') {
+    from.setDate(now.getDate() - 6); from.setHours(0, 0, 0, 0);
+  } else if (periodo === 'mes') {
+    from.setDate(now.getDate() - 29); from.setHours(0, 0, 0, 0);
+  } else if (periodo === 'custom') {
+    from = relCustomFrom ? new Date(relCustomFrom + 'T00:00:00') : (from.setHours(0, 0, 0, 0), from);
+    to   = relCustomTo   ? new Date(relCustomTo   + 'T23:59:59') : to;
+  }
+  return { from, to };
+}
+
+async function fetchReportOrders(from, to) {
+  // Servidor é a fonte de verdade (tem todo o histórico, inclusive concluídos)
+  try {
+    const qs  = `?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`;
+    const res = await apiFetch('GET', `/api/orders/report${qs}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) return data.map(o => ({
+        createdAt: o.created_at, product: o.product_name || '—',
+        total: Number(o.total) || 0, status: o.status,
+      }));
+    }
+  } catch { /* offline — usa localStorage */ }
+
+  return getOrders()
+    .filter(o => { const d = new Date(o.createdAt); return d >= from && d <= to; })
+    .map(o => ({
+      createdAt: o.createdAt, product: o.product?.name || o.product_name || '—',
+      total: Number(o.total) || 0, status: o.status,
+    }));
+}
+
+function renderReportBody(orders) {
+  const body = document.getElementById('rel-body');
+  if (!orders.length) {
+    body.innerHTML = '<div class="rel-row" style="justify-content:center;opacity:.5;padding:2rem 0">Nenhum pedido nesse período</div>';
+    return;
+  }
+
+  const vendas      = orders.filter(o => REVENUE_STATUSES.includes(o.status));
+  const faturamento = vendas.reduce((s, o) => s + o.total, 0);
+  const ticket      = vendas.length ? faturamento / vendas.length : 0;
+
+  // Ranking de produtos mais vendidos (só vendas confirmadas)
+  const prodCount = {};
+  vendas.forEach(o => { prodCount[o.product] = (prodCount[o.product] || 0) + 1; });
+  const top  = Object.entries(prodCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const maxQ = top.length ? top[0][1] : 1;
+
+  // Breakdown por status (todos)
+  const porStatus = {};
+  orders.forEach(o => { porStatus[o.status] = (porStatus[o.status] || 0) + 1; });
+
+  let rankRows = top.map(([nome, qtd], i) => `
+    <div class="rel-rank-row">
+      <span class="rel-rank-pos ${i === 0 ? 'gold' : ''}">${i + 1}</span>
+      <div class="rel-rank-info">
+        <div class="rel-rank-name">${nome}</div>
+        <div class="rel-rank-bar"><div class="rel-rank-fill" style="width:${Math.round((qtd / maxQ) * 100)}%"></div></div>
+      </div>
+      <span class="rel-rank-qtd">${qtd}</span>
+    </div>`).join('');
+  if (!top.length) rankRows = '<div class="rel-row" style="justify-content:center;opacity:.5">Sem vendas confirmadas</div>';
+
+  const statusRows = Object.entries(porStatus)
+    .sort((a, b) => b[1] - a[1])
+    .map(([s, n]) => `<div class="rel-row"><span>${REL_STATUS_LABEL[s] || s}</span><strong>${n}</strong></div>`)
+    .join('');
+
+  body.innerHTML = `
+    <div class="rel-cards">
+      <div class="rel-card">
+        <span class="rel-card-label">Faturamento</span>
+        <span class="rel-card-val rel-green">${brl(faturamento)}</span>
+      </div>
+      <div class="rel-card">
+        <span class="rel-card-label">Vendas</span>
+        <span class="rel-card-val">${vendas.length}</span>
+      </div>
+      <div class="rel-card">
+        <span class="rel-card-label">Ticket médio</span>
+        <span class="rel-card-val">${brl(ticket)}</span>
+      </div>
+    </div>
+
+    <div class="rel-section-title">🏆 Mais vendidos</div>
+    <div class="rel-ranking">${rankRows}</div>
+
+    <div class="rel-section-title">📋 Por status</div>
+    ${statusRows}`;
+}
+
+async function renderReport() {
+  const { from, to } = periodoRange(relPeriodo);
+  const body = document.getElementById('rel-body');
+  body.innerHTML = '<div class="rel-row" style="justify-content:center;opacity:.5;padding:2rem 0">Carregando…</div>';
+  const orders = await fetchReportOrders(from, to);
+  renderReportBody(orders);
+}
+
 document.getElementById('btn-relatorio').addEventListener('click', () => {
-  const hoje = new Date().toDateString();
-  const orders = getOrders().filter(o => new Date(o.createdAt).toDateString() === hoje);
-  const fat = orders.reduce((s, o) => s + (o.total || 0), 0);
-  const por_status = {};
-  orders.forEach(o => { por_status[o.status] = (por_status[o.status] || 0) + 1; });
-
-  const statusLabel = { aguardando_pix: 'Aguard. PIX', preparando: 'Preparando', pronto: 'Pronto', concluido: 'Concluído', cancelado: 'Cancelado' };
-  let rows = '';
-  Object.entries(por_status).forEach(([s, n]) => {
-    rows += `<div class="rel-row"><span>${statusLabel[s] || s}</span><strong>${n} pedido${n>1?'s':''}</strong></div>`;
-  });
-  if (!orders.length) rows = '<div class="rel-row" style="justify-content:center;opacity:.5">Sem pedidos hoje</div>';
   document.getElementById('relatorio-content').innerHTML = `
-    ${rows}
-    <div class="rel-total">Total do dia: R$ ${fat.toFixed(2).replace('.', ',')}</div>`;
+    <div class="rel-tabs">
+      <button class="rel-tab active" data-p="hoje">Hoje</button>
+      <button class="rel-tab" data-p="semana">Semana</button>
+      <button class="rel-tab" data-p="mes">Mês</button>
+      <button class="rel-tab" data-p="custom">Data</button>
+    </div>
+    <div class="rel-custom hidden" id="rel-custom">
+      <input type="date" id="rel-from" class="rel-date">
+      <span class="rel-custom-sep">até</span>
+      <input type="date" id="rel-to" class="rel-date">
+      <button id="rel-apply" class="rel-apply-btn">Ver</button>
+    </div>
+    <div id="rel-body"></div>`;
 
+  // Tabs
+  document.querySelectorAll('.rel-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.rel-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      relPeriodo = tab.dataset.p;
+      document.getElementById('rel-custom').classList.toggle('hidden', relPeriodo !== 'custom');
+      if (relPeriodo !== 'custom') renderReport();
+    });
+  });
+
+  // Data personalizada
+  document.getElementById('rel-apply').addEventListener('click', () => {
+    relCustomFrom = document.getElementById('rel-from').value || null;
+    relCustomTo   = document.getElementById('rel-to').value || null;
+    renderReport();
+  });
+
+  relPeriodo = 'hoje';
+  renderReport();
   document.getElementById('modal-relatorio').classList.remove('hidden');
   closeSidebar();
 });
