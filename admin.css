@@ -872,12 +872,21 @@ input, button, textarea { font-family: inherit; }
 /* Login redesign */
 .login-logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: .9rem;
+  gap: .85rem;
   margin-bottom: .25rem;
   justify-content: center;
 }
 .login-logo-emoji { font-size: 2.2rem; }
+.login-logo-img {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  border-radius: 18px;
+  filter: drop-shadow(0 6px 22px rgba(233,30,140,.5));
+}
+.login-logo-text { text-align: center; }
 .login-brand      { font-family: var(--mono); font-size: .78rem; letter-spacing: .2em; color: #fff; font-weight: 700; }
 .login-brand-sub  { font-family: var(--mono); font-size: .55rem; letter-spacing: .12em; color: var(--gold); margin-top: 2px; }
 .login-divider    { height: 1px; background: var(--border); margin: 1rem 0; }
