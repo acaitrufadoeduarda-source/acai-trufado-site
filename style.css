@@ -1517,6 +1517,10 @@ footer {
   letter-spacing: .04em;
   cursor: pointer;
   transition: all .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
   box-shadow: 0 4px 20px rgba(233,30,140,.4);
 }
 
@@ -1965,6 +1969,34 @@ footer {
   padding: 3px 10px;
   border-radius: 6px;
   margin-bottom: .5rem;
+}
+
+/* ── Selinho com logo oficial do PIX ──────────────────────────── */
+.pix-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border-radius: 7px;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.pix-mark svg { width: 100%; height: 100%; display: block; }
+.pix-mark-sm {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  padding: 3px;
+  margin-right: .15rem;
+  vertical-align: middle;
+}
+.order-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
 }
 
 .pix-total {
