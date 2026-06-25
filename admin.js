@@ -798,6 +798,26 @@ let editingId    = null;
 let groups       = [];
 let productsInMemory = null; // cache em memória com imagens
 
+/* ── Cloudinary (armazenamento de fotos) ─────────────────────────
+   Valores PÚBLICOS (upload sem assinatura). Não há segredo aqui. */
+const CLOUDINARY_CLOUD  = 'dxpdf81iu';
+const CLOUDINARY_PRESET = 'acai_unsigned';
+
+// Sobe uma imagem (data URL) pro Cloudinary e devolve a URL pública (secure_url)
+async function uploadToCloudinary(dataURL) {
+  const form = new FormData();
+  form.append('file', dataURL);
+  form.append('upload_preset', CLOUDINARY_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) throw new Error('Cloudinary ' + res.status);
+  const data = await res.json();
+  if (!data.secure_url) throw new Error('Cloudinary sem secure_url');
+  return data.secure_url;
+}
+
 function getProducts() {
   if (productsInMemory !== null) return productsInMemory;
   try { return JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || []; }
@@ -805,22 +825,35 @@ function getProducts() {
 }
 
 async function saveProducts(list) {
-  productsInMemory = list; // mostra imediato (com imagens originais)
+  productsInMemory = list; // mostra imediato
 
-  // Comprime imagens grandes (>150KB) antes de enviar — evita "request entity too large"
-  const listComprimida = await Promise.all(list.map(async p => {
-    if (p.imageBase64 && p.imageBase64.length > 150_000) {
-      return { ...p, imageBase64: await compressImage(p.imageBase64) };
+  if (list.some(p => p.imageBase64?.startsWith('data:'))) {
+    showToast('☁️ Publicando fotos…');
+  }
+
+  // Sobe fotos em base64 (data:) pro Cloudinary e troca pela URL (leve).
+  // Se já for URL (http), mantém. Se o upload falhar, comprime o base64 como fallback.
+  const listFinal = await Promise.all(list.map(async p => {
+    const img = p.imageBase64;
+    if (img && img.startsWith('data:')) {
+      const leve = img.length > 150_000 ? await compressImage(img) : img;
+      try {
+        const url = await uploadToCloudinary(leve);
+        return { ...p, imageBase64: url };
+      } catch (e) {
+        console.error('Upload Cloudinary falhou — mantendo base64 comprimido:', e);
+        return { ...p, imageBase64: leve };
+      }
     }
-    return p;
+    return p; // já é URL ou sem imagem
   }));
-  productsInMemory = listComprimida; // memória passa a usar as versões leves
+  productsInMemory = listFinal; // memória passa a usar URLs
 
   // Salva no servidor (fonte de verdade) — e AVISA se falhar
   fetch(`${API_BASE}/api/products`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'x-admin-token': pin },
-    body: JSON.stringify(listComprimida),
+    body: JSON.stringify(listFinal),
   })
     .then(async res => {
       if (!res.ok) {
@@ -829,15 +862,14 @@ async function saveProducts(list) {
         showToast(`⚠️ NÃO salvou no site! ${msg || 'Erro ' + res.status}. Tente de novo.`);
       } else {
         showToast('✅ Salvo e publicado no site!');
-        try { sessionStorage.setItem('acai_products_imgs', JSON.stringify(listComprimida)); } catch {}
+        try { sessionStorage.setItem('acai_products_imgs', JSON.stringify(listFinal)); } catch {}
       }
     })
     .catch(() => showToast('⚠️ Sem conexão — não salvou no site. Verifique a internet.'));
 
-  // Cache local sem imagens (evita QuotaExceededError com base64 grandes)
+  // Cache local — agora as imagens são URLs curtas, cabe tranquilo
   try {
-    const semImagem = listComprimida.map(p => ({ ...p, imageBase64: null }));
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(semImagem));
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(listFinal));
   } catch { localStorage.removeItem(PRODUCTS_KEY); }
 }
 
