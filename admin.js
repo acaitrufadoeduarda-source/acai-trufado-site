@@ -673,6 +673,24 @@ function saveProducts(list) {
 }
 
 async function loadProductsFromAPI() {
+  // Mostra cache local imediatamente (sem esperar a rede)
+  const cached = (() => {
+    try { return JSON.parse(sessionStorage.getItem('acai_products_imgs')); } catch { return null; }
+  })();
+  if (cached?.length) {
+    productsInMemory = cached;
+    renderProducts();
+  } else {
+    const local = (() => {
+      try { return JSON.parse(localStorage.getItem(PRODUCTS_KEY)); } catch { return null; }
+    })();
+    if (local?.length) {
+      productsInMemory = local;
+      renderProducts();
+    }
+  }
+
+  // Busca da API em background e atualiza imagens
   try {
     const res = await fetch(`${API_BASE}/api/products`, {
       headers: { 'x-admin-token': pin },
@@ -688,6 +706,8 @@ async function loadProductsFromAPI() {
         active:      p.active,
         groups:      p.groups || [],
       }));
+      // Guarda imagens na sessionStorage para navegações subsequentes serem instantâneas
+      try { sessionStorage.setItem('acai_products_imgs', JSON.stringify(productsInMemory)); } catch {}
       renderProducts();
     }
   } catch { /* ignora */ }
