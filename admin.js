@@ -245,7 +245,14 @@ function getLojaConfig() {
   catch { return { modo: 'fechado', dias: [], horaIni: '14:00', horaFim: '22:00' }; }
 }
 
-function salvarLojaConfig(cfg) { localStorage.setItem(LOJA_KEY, JSON.stringify(cfg)); }
+function salvarLojaConfig(cfg) {
+  localStorage.setItem(LOJA_KEY, JSON.stringify(cfg));
+  fetch(`${API_BASE}/api/settings`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': pin },
+    body: JSON.stringify(cfg),
+  }).catch(() => {});
+}
 
 function initLojaControl() {
   const cfg = getLojaConfig();

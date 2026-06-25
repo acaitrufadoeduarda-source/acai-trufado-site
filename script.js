@@ -1225,6 +1225,14 @@ orderConfirm.addEventListener('click', openDeliveryStep);
 
 /* ── Botões "Montar Meu Pote" ─────────────────────────────── */
 function triggerOrder() {
+  if (!storeIsOpen) {
+    const banner = document.getElementById('store-closed-banner');
+    if (banner) {
+      banner.classList.remove('hidden');
+      banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return;
+  }
   if (!activeProducts.length) {
     document.getElementById('cremes')?.scrollIntoView({ behavior: 'smooth' });
     return;
@@ -1318,6 +1326,50 @@ window.triggerOrder = triggerOrder; // exposto para onclick no HTML
 
   updateUI();
 })();
+
+/* ════════════════════════════════════════════════════════════
+   STATUS DA LOJA — sincroniza com admin
+════════════════════════════════════════════════════════════ */
+let storeIsOpen = true; // otimista por padrão
+
+function calcStoreOpen(cfg) {
+  if (!cfg) return true;
+  if (cfg.modo === 'aberto') return true;
+  if (cfg.modo === 'fechado') return false;
+  // modo 'auto' — verifica dia e horário
+  const agora    = new Date();
+  const diaAtual = agora.getDay();
+  const minAtual = agora.getHours() * 60 + agora.getMinutes();
+  const [hIni, mIni] = (cfg.horaIni || '00:00').split(':').map(Number);
+  const [hFim, mFim] = (cfg.horaFim || '23:59').split(':').map(Number);
+  return (cfg.dias || []).includes(diaAtual) && minAtual >= hIni * 60 + mIni && minAtual < hFim * 60 + mFim;
+}
+
+function applyStoreStatus(isOpen) {
+  storeIsOpen = isOpen;
+  const closedBanner = document.getElementById('store-closed-banner');
+  const orderBtns = document.querySelectorAll('.btn-montar, #btn-montar-hero, #btn-montar-cta, [data-order-id]');
+
+  if (isOpen) {
+    closedBanner?.classList.add('hidden');
+    orderBtns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+  } else {
+    closedBanner?.classList.remove('hidden');
+    orderBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.45'; b.style.cursor = 'not-allowed'; });
+  }
+}
+
+async function loadStoreStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/settings`);
+    if (!res.ok) return;
+    const cfg = await res.json();
+    applyStoreStatus(calcStoreOpen(cfg));
+  } catch { /* sem conexão — mantém aberta por padrão */ }
+}
+
+loadStoreStatus();
+setInterval(loadStoreStatus, 60_000); // atualiza a cada 1 min
 
 document.getElementById('btn-montar-hero')?.addEventListener('click', triggerOrder);
 document.getElementById('btn-montar-cta')?.addEventListener('click',  triggerOrder);

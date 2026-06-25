@@ -433,6 +433,20 @@ h2.hero-h2 {
 /* ═══════════════════════════════════════════════════════════════
    BOTÕES
 ═══════════════════════════════════════════════════════════════ */
+.store-closed-banner {
+  background: rgba(220, 38, 38, 0.15);
+  border: 1.5px solid rgba(220, 38, 38, 0.5);
+  color: #fca5a5;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.5rem 1.2rem;
+  border-radius: 50px;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+.store-closed-banner.hidden { display: none; }
+
 .cta-group {
   display: flex;
   gap: 1rem;
