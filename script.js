@@ -176,9 +176,9 @@ heroSequence.forEach(([sel, delay]) => {
 ════════════════════════════════════════════════════════════ */
 document.querySelectorAll('.btn-primary, .btn-cta').forEach(btn => {
   btn.addEventListener('mouseenter', () =>
-    animate(btn, { scale: 1.05 }, { easing: spring({ stiffness: 400, damping: 20 }) }));
+    animate(btn, { scale: 1.05 }, { duration: 0.18, easing: 'ease-out' }));
   btn.addEventListener('mouseleave', () =>
-    animate(btn, { scale: 1 }, { easing: spring({ stiffness: 300, damping: 22 }) }));
+    animate(btn, { scale: 1 }, { duration: 0.22, easing: 'ease-out' }));
   btn.addEventListener('mousedown', () =>
     animate(btn, { scale: 0.96 }, { duration: 0.08 }));
   btn.addEventListener('mouseup', () =>
@@ -197,7 +197,7 @@ function addTilt(card) {
   });
   card.addEventListener('mouseleave', () => {
     animate(card, { rotateX: 0, rotateY: 0, scale: 1 },
-      { easing: spring({ stiffness: 260, damping: 22 }) });
+      { duration: 0.3, easing: 'ease-out' });
   });
 }
 
