@@ -4,7 +4,7 @@ self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
 
 self.addEventListener('push', e => {
   if (!e.data) return;
-  const { title, body, orderId } = e.data.json();
+  const { title, body, orderId, url } = e.data.json();
   e.waitUntil(
     self.registration.showNotification(title, {
       body,
@@ -12,7 +12,7 @@ self.addEventListener('push', e => {
       badge: '/logotipo.png',
       tag: orderId ?? 'acai-order',
       renotify: true,
-      data: { url: '/index.html' },
+      data: { url: url ?? '/index.html' },
     })
   );
 });

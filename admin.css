@@ -710,6 +710,23 @@ input, button, textarea { font-family: inherit; }
 .sidebar-btn-install:hover { background: rgba(233,30,140,.25); color: #fff; }
 .sidebar-btn-install.hidden { display: none; }
 
+.sidebar-btn-notif {
+  margin: .4rem .75rem .2rem;
+  padding: .7rem 1rem;
+  background: linear-gradient(135deg, rgba(16,185,129,.18), rgba(16,185,129,.08));
+  border: 1px solid rgba(16,185,129,.4);
+  border-radius: 10px;
+  color: #34d399;
+  width: calc(100% - 1.5rem);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s, color .15s;
+}
+.sidebar-btn-notif:hover { background: rgba(16,185,129,.25); color: #fff; }
+.sidebar-btn-notif.hidden { display: none; }
+
 /* Controle da loja */
 .loja-control {
   padding: .5rem .75rem .2rem;

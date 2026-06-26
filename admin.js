@@ -87,21 +87,27 @@ const passInput  = document.getElementById('login-password');
 const pinInput   = passInput; // alias para compatibilidade com código que usa pinInput
 
 // Restaura sessão salva — mas VALIDA o token antes de confiar nele
-const savedSession = sessionStorage.getItem('acai_admin_session');
+// Migra sessão antiga (sessionStorage) para localStorage, se existir
+const legacySession = sessionStorage.getItem('acai_admin_session');
+if (legacySession && !localStorage.getItem('acai_admin_session')) {
+  localStorage.setItem('acai_admin_session', legacySession);
+  sessionStorage.removeItem('acai_admin_session');
+}
+const savedSession = localStorage.getItem('acai_admin_session');
 if (savedSession) {
   pin = savedSession;
   // Testa a sessão: se o servidor recusar (401), a sessão é velha → volta pro login
   fetch(`${API_BASE}/api/orders`, { headers: { 'x-admin-token': savedSession } })
     .then(r => {
       if (r.status === 401) {
-        sessionStorage.removeItem('acai_admin_session');
+        localStorage.removeItem('acai_admin_session');
         pin = '';
         showLogin();
       } else {
         showMain();
       }
     })
-    .catch(() => showLogin()); // servidor offline — exige login (não confia na sessão cega)
+    .catch(() => showMain()); // servidor dormindo/offline — confia na sessão salva (toda chamada real revalida o token)
 } else {
   showLogin();
 }
@@ -142,7 +148,8 @@ async function doLogin() {
     if (res.ok) {
       const { token } = await res.json();
       pin = token;
-      sessionStorage.setItem('acai_admin_session', token);
+      localStorage.setItem('acai_admin_session', token);
+      subscribeAdminPush(); // ativa notificações de novos pedidos no aparelho
       showMain();
     } else {
       pinError.textContent = 'E-mail ou senha incorretos.';
@@ -468,7 +475,7 @@ function atualizarStatusBadge(modo) {
 btnLogout.addEventListener('click', () => {
   if (!confirm('Sair do painel?')) return;
   stopPolling();
-  sessionStorage.removeItem('acai_admin_session');
+  localStorage.removeItem('acai_admin_session');
   pin = '';
   screenMain.classList.remove('active');
   screenLogin.classList.add('active');
@@ -1531,7 +1538,7 @@ async function apiFetch(method, path, body = null, overridePin = null) {
   if (res.status === 401) {
     stopPolling();
     pin = null;
-    sessionStorage.removeItem('acai_admin_session');
+    localStorage.removeItem('acai_admin_session');
     showLogin();
     throw new Error('Sessão expirada');
   }
@@ -1604,6 +1611,55 @@ function showToast(msg, duration = 3000) {
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');
+}
+
+/* ── Notificações de novos pedidos (push para a Eduarda) ─────── */
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function subscribeAdminPush() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+    showToast('ℹ️ Este aparelho não suporta notificações.');
+    return;
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      showToast('🔕 Notificações bloqueadas. Libere nas configurações do navegador.');
+      return;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const keyRes = await fetch(`${API_BASE}/api/push/vapid-public-key`);
+    const { key } = await keyRes.json();
+    if (!key) return;
+
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key),
+    });
+
+    await fetch(`${API_BASE}/api/push/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'ADMIN', subscription: sub }),
+    });
+    showToast('🔔 Notificações de pedidos ativadas!');
+  } catch (e) {
+    console.warn('Push admin falhou:', e);
+    showToast('⚠️ Não consegui ativar as notificações.');
+  }
+}
+
+// Botão manual na sidebar (caso precise reativar)
+document.getElementById('btn-ativar-notif')?.addEventListener('click', subscribeAdminPush);
+
+// Reinscreve automaticamente quem já tem permissão concedida (ao abrir o painel)
+if ('Notification' in window && Notification.permission === 'granted') {
+  subscribeAdminPush();
 }
 
 /* ── Instalar PWA ──────────────────────────────────────────── */
