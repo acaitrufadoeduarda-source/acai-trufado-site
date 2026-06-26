@@ -209,12 +209,33 @@ snavConfig.addEventListener('click', () => { switchTab('config'); closeSidebar()
 /* ════════════════════════════════════════════════════════════
    RESUMO HOJE
 ════════════════════════════════════════════════════════════ */
-function updateResumoHoje() {
-  const hoje = new Date().toDateString();
+async function updateResumoHoje() {
+  const setUI = (qtd, fat) => {
+    document.getElementById('resumo-pedidos').textContent = qtd;
+    document.getElementById('resumo-fat').textContent = 'R$ ' + fat.toFixed(2).replace('.', ',');
+  };
+
+  // Fonte de verdade: SERVIDOR (não o cache local, que pode estar desatualizado)
+  const now  = new Date();
+  const from = new Date(now); from.setHours(0, 0, 0, 0);
+  const to   = new Date(now); to.setHours(23, 59, 59, 999);
+  try {
+    const qs  = `?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`;
+    const res = await apiFetch('GET', `/api/orders/report${qs}`);
+    if (res.ok) {
+      const data    = await res.json();
+      const REVENUE = ['pago', 'preparando', 'pronto', 'motoboy_a_caminho', 'concluido'];
+      const vendas  = (data || []).filter(o => REVENUE.includes(o.status));
+      const fat     = vendas.reduce((s, o) => s + (Number(o.total) || 0), 0);
+      setUI(vendas.length, fat);
+      return;
+    }
+  } catch { /* offline — usa o cache local como fallback */ }
+
+  const hoje   = new Date().toDateString();
   const orders = getOrders().filter(o => new Date(o.createdAt).toDateString() === hoje);
-  const fat = orders.reduce((s, o) => s + (o.total || 0), 0);
-  document.getElementById('resumo-pedidos').textContent = orders.length;
-  document.getElementById('resumo-fat').textContent = 'R$ ' + fat.toFixed(2).replace('.', ',');
+  const fat    = orders.reduce((s, o) => s + (o.total || 0), 0);
+  setUI(orders.length, fat);
 }
 
 /* ── Relatório com períodos + mais vendidos ──────────────────── */
