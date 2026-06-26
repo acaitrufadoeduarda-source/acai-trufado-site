@@ -547,6 +547,7 @@ let selectedDelivery = null;
 let activeOrderId    = null;
 let pixTimerInterval = null;
 let pollInterval     = null;
+let cart             = []; // carrinho: [{ id, productId, productName, imageBase64, summary, subtotal }]
 
 /* ── Abre o modal com o produto ───────────────────────────── */
 function openOrderModal(product) {
@@ -583,6 +584,132 @@ function openOrderModal(product) {
 function closeOrderModal() {
   orderOverlay.classList.add('hidden');
   document.body.style.overflow = '';
+}
+
+/* ════════════════════════════════════════════════════════════
+   CARRINHO
+════════════════════════════════════════════════════════════ */
+const cartOverlay = document.getElementById('cart-overlay');
+const btnCart     = document.getElementById('btn-cart');
+
+function cartTotal() { return cart.reduce((s, i) => s + (Number(i.subtotal) || 0), 0); }
+const brlFmt = n => `R$ ${(Number(n) || 0).toFixed(2).replace('.', ',')}`;
+
+function updateCartButton() {
+  if (!btnCart) return;
+  const qtd = cart.length;
+  document.getElementById('cart-count').textContent = qtd;
+  btnCart.classList.toggle('hidden', qtd === 0);
+  if (qtd > 0) { btnCart.classList.add('bump'); setTimeout(() => btnCart.classList.remove('bump'), 400); }
+}
+
+// Adiciona o pote que está sendo montado ao carrinho
+function addToCart() {
+  if (!storeIsOpen) { triggerOrder(); return; }
+  const missing = validateOrder();
+  if (missing) {
+    orderBody.querySelectorAll('.order-group').forEach(g => {
+      if (g.querySelector('.order-group-name')?.textContent.trim() === missing) {
+        animate(g, { x: [-5, 5, -4, 4, 0] }, { duration: 0.35 });
+        const nm = g.querySelector('.order-group-name');
+        nm.style.color = '#e91e8c';
+        setTimeout(() => { nm.style.color = ''; }, 1100);
+      }
+    });
+    return;
+  }
+  cart.push({
+    id:          uid(),
+    productId:   orderProduct.id,
+    productName: orderProduct.name,
+    imageBase64: orderProduct.imageBase64 || null,
+    summary:     buildSelectionsSummary(),
+    subtotal:    calcTotal(),
+  });
+  updateCartButton();
+  closeOrderModal();
+  openCart();
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(i => i.id !== id);
+  updateCartButton();
+  if (cart.length === 0) { closeCart(); return; }
+  renderCart();
+}
+
+function renderCart() {
+  const box = document.getElementById('cart-items');
+  if (!cart.length) {
+    box.innerHTML = '<div class="cart-empty">Seu carrinho está vazio 🛒</div>';
+  } else {
+    box.innerHTML = cart.map(i => {
+      const detalhe = (i.summary || [])
+        .map(g => g.options.map(o => (o.qty > 1 ? o.qty + '× ' : '') + o.name).join(', '))
+        .filter(Boolean).join(' · ');
+      const img = i.imageBase64
+        ? `<img src="${i.imageBase64}" alt="" class="cart-item-img" />`
+        : `<div class="cart-item-emoji">🍧</div>`;
+      return `
+        <div class="cart-item">
+          ${img}
+          <div class="cart-item-info">
+            <div class="cart-item-name">${escHtml(i.productName)}</div>
+            <div class="cart-item-detail">${escHtml(detalhe || 'Sem acompanhamentos')}</div>
+            <div class="cart-item-bottom">
+              <span class="cart-item-price">${brlFmt(i.subtotal)}</span>
+              <button type="button" class="cart-item-remove" data-remove="${i.id}">🗑 Remover</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    box.querySelectorAll('[data-remove]').forEach(btn =>
+      btn.addEventListener('click', () => removeFromCart(btn.dataset.remove)));
+  }
+  document.getElementById('cart-total-val').textContent = brlFmt(cartTotal());
+}
+
+function openCart() {
+  renderCart();
+  cartOverlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeCart() {
+  cartOverlay.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+btnCart?.addEventListener('click', openCart);
+document.getElementById('cart-close')?.addEventListener('click', closeCart);
+cartOverlay?.addEventListener('click', e => { if (e.target === cartOverlay) closeCart(); });
+document.getElementById('cart-add-more')?.addEventListener('click', () => {
+  closeCart();
+  document.getElementById('cremes')?.scrollIntoView({ behavior: 'smooth' });
+});
+document.getElementById('cart-checkout')?.addEventListener('click', () => {
+  if (!cart.length) return;
+  closeCart();
+  openDeliveryStep();
+});
+
+// Renderiza o resumo do pedido (1+ potes). Suporta formato novo (carrinho) e antigo.
+function formatSummaryHTML(summary) {
+  const arr = Array.isArray(summary) ? summary : [];
+  return arr.map(item => {
+    // Formato novo (carrinho): { produto, subtotal, grupos:[{groupName, options}] }
+    if (item.grupos || item.produto) {
+      const grupos = (item.grupos || []).map(g =>
+        `<div class="sel-sub"><strong>${escHtml(g.groupName)}:</strong> ${(g.options || []).map(o => escHtml((o.qty > 1 ? o.qty + '× ' : '') + o.name)).join(', ')}</div>`
+      ).join('');
+      const preco = item.subtotal != null ? ` · ${brlFmt(item.subtotal)}` : '';
+      return `<div class="sel-pote"><div class="sel-pote-name">🍧 ${escHtml(item.produto || 'Açaí')}${preco}</div>${grupos}</div>`;
+    }
+    // Formato antigo (1 item, grupos soltos)
+    if (item.options) {
+      return `<div class="tracking-sel-line"><strong>${escHtml(item.groupName)}:</strong> ${item.options.map(o => escHtml((o.qty > 1 ? o.qty + '× ' : '') + o.name)).join(', ')}</div>`;
+    }
+    return `<div class="tracking-sel-line"><strong>${escHtml(item.label || item.groupName || '')}:</strong> ${escHtml(item.value || '')}</div>`;
+  }).join('');
 }
 
 /* ── Renderiza grupos e opções ────────────────────────────── */
@@ -717,20 +844,10 @@ function validateOrder() {
    ETAPA 2 — ENTREGA + DADOS DO CLIENTE
 ════════════════════════════════════════════════════════════ */
 function openDeliveryStep() {
-  const missing = validateOrder();
-  if (missing) {
-    orderBody.querySelectorAll('.order-group').forEach(g => {
-      if (g.querySelector('.order-group-name')?.textContent.trim() === missing) {
-        animate(g, { x: [-5, 5, -4, 4, 0] }, { duration: 0.35 });
-        const nm = g.querySelector('.order-group-name');
-        nm.style.color = '#e91e8c';
-        setTimeout(() => { nm.style.color = ''; }, 1100);
-      }
-    });
-    return;
-  }
-  document.getElementById('delivery-total-val').textContent = orderTotalVal.textContent;
+  if (!cart.length) return; // carrinho vazio
+  document.getElementById('delivery-total-val').textContent = brlFmt(cartTotal());
   orderOverlay.classList.add('hidden');
+  cartOverlay.classList.add('hidden');
   deliveryOverlay.classList.remove('hidden');
 }
 
@@ -745,7 +862,7 @@ deliveryOverlay.querySelectorAll('.delivery-opt').forEach(btn => {
 
 document.getElementById('delivery-back').addEventListener('click', () => {
   deliveryOverlay.classList.add('hidden');
-  orderOverlay.classList.remove('hidden');
+  openCart();
 });
 
 document.getElementById('delivery-close').addEventListener('click', closeAllModals);
@@ -858,17 +975,21 @@ function drawQR(canvas, text) {
 }
 
 async function openPixStep(customerName, customerPhone) {
-  const total   = calcTotal();
+  const total   = cartTotal();
   const orderId = uid();
   activeOrderId = orderId;
   localStorage.setItem('acai_active_order', orderId);
+
+  // Resumo do pedido (todos os potes do carrinho)
+  const potes = cart.map(i => ({ produto: i.productName, subtotal: i.subtotal, grupos: i.summary }));
+  const nomeResumo = cart.length === 1 ? cart[0].productName : `${cart.length} itens`;
 
   // Cria o pedido no localStorage
   const order = {
     id: orderId,
     createdAt: Date.now(),
-    product: { id: orderProduct.id, name: orderProduct.name },
-    summary: buildSelectionsSummary(),
+    product: { name: nomeResumo },
+    summary: potes,
     deliveryMethod: selectedDelivery,
     customerName,
     customerPhone,
@@ -878,20 +999,18 @@ async function openPixStep(customerName, customerPhone) {
     pixExpiry: Date.now() + 10 * 60 * 1000,
   };
 
-  // Tenta chamar backend Mercado Pago (Next.js em :3000)
+  // Tenta chamar backend Mercado Pago
   let pixCode;
   try {
     const res = await fetch(`${API_BASE}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        customerName:   order.customerName,
-        customerPhone:  order.customerPhone,
-        productId:      order.product?.id ?? null,
-        productName:    order.product?.name ?? order.productName ?? '',
-        summary:        order.summary,
-        deliveryMethod: order.deliveryMethod,
-        // total NÃO é mais enviado — o servidor recalcula (evita manipulação de preço)
+        customerName,
+        customerPhone,
+        deliveryMethod: selectedDelivery,
+        items: cart.map(i => ({ productId: i.productId, productName: i.productName, summary: i.summary })),
+        // total NÃO é enviado — o servidor recalcula (evita manipulação de preço)
       }),
       signal: AbortSignal.timeout(8000),
     });
@@ -910,6 +1029,10 @@ async function openPixStep(customerName, customerPhone) {
   const orders = getOrders();
   orders.unshift(order);
   saveOrders(orders);
+
+  // Pedido criado → esvazia o carrinho
+  cart = [];
+  updateCartButton();
 
   // Salva telefone para o sino poder reativar notificações depois
   if (order.customerPhone) localStorage.setItem('acai_customer_phone', order.customerPhone);
@@ -1106,12 +1229,7 @@ async function openTracking(orderId) {
   // Resumo
   document.getElementById('tracking-prod-name').textContent = order.product?.name || '';
   const selList = document.getElementById('tracking-sel-list');
-  selList.innerHTML = (order.summary || []).map(g => {
-    if (g.options) {
-      return `<div class="tracking-sel-line"><strong>${escHtml(g.groupName)}:</strong> ${g.options.map(o => escHtml((o.qty > 1 ? o.qty + '× ' : '') + o.name)).join(', ')}</div>`;
-    }
-    return `<div class="tracking-sel-line"><strong>${escHtml(g.label || g.groupName || '')}:</strong> ${escHtml(g.value || '')}</div>`;
-  }).join('');
+  selList.innerHTML = formatSummaryHTML(order.summary);
 
   const STORE_ADDRESS = 'Tv. Lauro Bezerra, 144 - Potengi, Natal - RN, 59127-270';
   const isMotoboy = order.deliveryMethod === 'motoboy';
@@ -1269,7 +1387,7 @@ function closeAllModals() {
 
 orderClose.addEventListener('click', closeAllModals);
 orderOverlay.addEventListener('click', e => { if (e.target === orderOverlay) closeAllModals(); });
-orderConfirm.addEventListener('click', openDeliveryStep);
+orderConfirm.addEventListener('click', addToCart);
 
 /* ── Botões "Montar Meu Pote" ─────────────────────────────── */
 function triggerOrder() {

@@ -711,13 +711,26 @@ function buildCard(order) {
   card.querySelector('.order-product-name').textContent    = order.product?.name || '—';
   card.querySelector('.order-delivery-badge').textContent  = DELIVERY_LABEL[order.deliveryMethod] || order.deliveryMethod || '—';
 
-  // Seleções
+  // Seleções (suporta carrinho com vários potes E formato antigo de 1 item)
   const selList = card.querySelector('.order-sel-list');
-  (order.summary || []).forEach(g => {
-    if (!g.options?.length) return;
+  (order.summary || []).forEach(item => {
+    // Formato novo (carrinho): { produto, subtotal, grupos:[{groupName, options}] }
+    if (item.grupos || item.produto) {
+      const wrap = document.createElement('div');
+      wrap.className = 'order-sel-pote';
+      const preco = item.subtotal != null ? ` · R$ ${Number(item.subtotal).toFixed(2).replace('.', ',')}` : '';
+      const grupos = (item.grupos || []).map(g =>
+        `<div class="order-sel-line"><strong>${escHtml(g.groupName)}:</strong> ${(g.options || []).map(o => escHtml((o.qty > 1 ? o.qty + '× ' : '') + o.name)).join(', ')}</div>`
+      ).join('');
+      wrap.innerHTML = `<div class="order-sel-pote-name">🍧 ${escHtml(item.produto || 'Açaí')}${preco}</div>${grupos}`;
+      selList.appendChild(wrap);
+      return;
+    }
+    // Formato antigo (1 item, grupos soltos)
+    if (!item.options?.length) return;
     const line = document.createElement('div');
     line.className = 'order-sel-line';
-    line.innerHTML = `<strong>${escHtml(g.groupName)}:</strong> ${g.options.map(o => escHtml((o.qty > 1 ? o.qty + '× ' : '') + o.name)).join(', ')}`;
+    line.innerHTML = `<strong>${escHtml(item.groupName)}:</strong> ${item.options.map(o => escHtml((o.qty > 1 ? o.qty + '× ' : '') + o.name)).join(', ')}`;
     selList.appendChild(line);
   });
 
@@ -803,11 +816,16 @@ function abrirWhatsApp(order, tipo) {
   const idCurto = '#' + order.id.slice(-6).toUpperCase();
   const produto  = order.product?.name || 'Açaí Trufado';
 
-  // Monta lista de seleções
+  // Monta lista de seleções (carrinho com vários potes OU formato antigo)
   let itens = '';
-  (order.summary || []).forEach(g => {
-    if (g.options?.length) {
-      itens += `${g.groupName}: ${g.options.map(o => o.name).join(', ')}\n`;
+  (order.summary || []).forEach(item => {
+    if (item.grupos || item.produto) {
+      itens += `\n🍧 *${item.produto || 'Açaí'}*\n`;
+      (item.grupos || []).forEach(g => {
+        if (g.options?.length) itens += `  ${g.groupName}: ${g.options.map(o => (o.qty > 1 ? o.qty + 'x ' : '') + o.name).join(', ')}\n`;
+      });
+    } else if (item.options?.length) {
+      itens += `${item.groupName}: ${item.options.map(o => o.name).join(', ')}\n`;
     }
   });
   const total = `R$ ${Number(order.total).toFixed(2).replace('.', ',')}`;

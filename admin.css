@@ -2008,6 +2008,23 @@ input, button, textarea { font-family: inherit; }
   font-weight: 500;
 }
 
+/* Pote individual (pedido com carrinho de vários itens) */
+.order-sel-pote {
+  padding: .4rem .55rem;
+  margin-bottom: .4rem;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(233,30,140,.15);
+  border-radius: 9px;
+}
+.order-sel-pote:last-child { margin-bottom: 0; }
+.order-sel-pote-name {
+  font-family: var(--swiss);
+  font-weight: 700;
+  font-size: .82rem;
+  color: #fff;
+  margin-bottom: .25rem;
+}
+
 /* Botões de ação dos pedidos */
 .btn-confirm-pix {
   font-family: var(--swiss); font-weight: 700;

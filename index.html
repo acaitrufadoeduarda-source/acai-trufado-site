@@ -52,6 +52,14 @@
       <a href="#" class="cta-btn" onclick="event.preventDefault();triggerOrder()">Fazer Pedido</a>
     </div>
 
+    <button id="btn-cart" class="btn-cart hidden" aria-label="Ver carrinho" title="Ver carrinho">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+      </svg>
+      <span id="cart-count" class="cart-count">0</span>
+    </button>
+
     <button id="btn-notif" class="btn-notif" aria-label="Ativar notificações" title="Ativar notificações">
       <svg id="notif-icon-bell" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -340,11 +348,32 @@
       <!-- Rodapé fixo: total + confirmar -->
       <div class="order-footer">
         <div class="order-footer-total">
-          <span class="order-footer-label">Total do pedido</span>
+          <span class="order-footer-label">Valor deste item</span>
           <span class="order-footer-value" id="order-total-val">R$ 0,00</span>
         </div>
         <button type="button" class="order-confirm-btn" id="order-confirm">
-          Confirmar Pedido →
+          🛒 Adicionar ao Carrinho
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Carrinho (gaveta) ────────────────────────────────────── -->
+  <div id="cart-overlay" class="order-overlay hidden" aria-modal="true" role="dialog">
+    <div class="order-sheet cart-sheet">
+      <div class="cart-header">
+        <h2 class="cart-title">🛒 Seu Carrinho</h2>
+        <button type="button" class="order-close" id="cart-close" aria-label="Fechar">×</button>
+      </div>
+      <div class="cart-items" id="cart-items"></div>
+      <div class="order-footer">
+        <div class="order-footer-total">
+          <span class="order-footer-label">Total do pedido</span>
+          <span class="order-footer-value" id="cart-total-val">R$ 0,00</span>
+        </div>
+        <button type="button" class="cart-add-more-btn" id="cart-add-more">+ Adicionar mais um sabor</button>
+        <button type="button" class="order-confirm-btn" id="cart-checkout">
+          Finalizar Pedido →
         </button>
       </div>
     </div>
