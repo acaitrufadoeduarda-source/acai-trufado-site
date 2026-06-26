@@ -1103,6 +1103,113 @@ footer {
 
 .footer-admin:hover { color: var(--pinkl); }
 
+/* ── Links legais no rodapé ──────────────────────────────────── */
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+.footer-link-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: .6rem;
+  letter-spacing: .1em;
+  color: var(--soft);
+  text-transform: uppercase;
+  padding: 0;
+  transition: color .2s;
+}
+.footer-link-btn:hover { color: var(--pinkl); }
+.footer-sep { color: var(--soft); font-size: .6rem; }
+
+/* ── Modais legais (Privacidade / Termos) ────────────────────── */
+.legal-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.legal-modal.hidden { display: none; }
+.legal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(3px);
+}
+.legal-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 22px 22px 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: legalUp .3s ease;
+}
+@keyframes legalUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@media (min-width: 600px) {
+  .legal-modal { align-items: center; }
+  .legal-sheet { border-radius: 22px; }
+}
+.legal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.legal-header h3 {
+  font-family: var(--swiss);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+.legal-close {
+  background: rgba(255,255,255,.08);
+  border: none;
+  color: var(--muted);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: .9rem;
+}
+.legal-close:hover { color: #fff; background: rgba(255,255,255,.15); }
+.legal-body {
+  padding: 1.2rem 1.4rem 2rem;
+  overflow-y: auto;
+  font-family: var(--swiss);
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.65;
+}
+.legal-body h4 {
+  font-family: var(--swiss);
+  color: #fff;
+  font-size: .92rem;
+  font-weight: 700;
+  margin: 1.25rem 0 .4rem;
+}
+.legal-body p { margin-bottom: .7rem; }
+.legal-body ul { margin: 0 0 .7rem 1.1rem; }
+.legal-body li { margin-bottom: .35rem; }
+.legal-body strong { color: var(--pinkl); }
+.legal-body a { color: var(--gold); text-decoration: underline; }
+.legal-updated {
+  font-family: var(--mono);
+  font-size: .68rem;
+  color: var(--soft);
+  letter-spacing: .05em;
+  margin-bottom: 1rem !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    RESPONSIVO
 ═══════════════════════════════════════════════════════════════ */

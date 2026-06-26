@@ -226,9 +226,97 @@
       <span class="brand">AÇAÍ</span>
       <span class="sub">TRUFADO</span>
     </div>
+    <div class="footer-links">
+      <button type="button" class="footer-link-btn" onclick="document.getElementById('privacy-modal').classList.remove('hidden')">Política de Privacidade</button>
+      <span class="footer-sep">·</span>
+      <button type="button" class="footer-link-btn" onclick="document.getElementById('terms-modal').classList.remove('hidden')">Termos de Uso</button>
+    </div>
     <span class="footer-copy">© 2026 Eduarda Almeida · Todos os direitos reservados</span>
     <a href="/admin" class="footer-admin">Admin →</a>
   </footer>
+
+  <!-- ── Modal: Política de Privacidade ───────────────────────── -->
+  <div id="privacy-modal" class="legal-modal hidden">
+    <div class="legal-backdrop" onclick="document.getElementById('privacy-modal').classList.add('hidden')"></div>
+    <div class="legal-sheet">
+      <div class="legal-header">
+        <h3>🔒 Política de Privacidade</h3>
+        <button type="button" class="legal-close" onclick="document.getElementById('privacy-modal').classList.add('hidden')" aria-label="Fechar">✕</button>
+      </div>
+      <div class="legal-body">
+        <p class="legal-updated">Última atualização: junho de 2026</p>
+
+        <p>A <strong>Açaí Trufado</strong> (Eduarda Almeida) respeita a sua privacidade e está comprometida com a proteção dos seus dados pessoais, em conformidade com a <strong>Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018)</strong>.</p>
+
+        <h4>1. Quais dados coletamos</h4>
+        <p>Para processar e entregar o seu pedido, coletamos apenas o necessário:</p>
+        <ul>
+          <li><strong>Nome</strong> — para identificar o pedido;</li>
+          <li><strong>Telefone/WhatsApp</strong> — para contato sobre o pedido e atualizações;</li>
+          <li><strong>Endereço</strong> — apenas quando você escolhe entrega por motoboy;</li>
+          <li><strong>Itens do pedido</strong> — o que você montou.</li>
+        </ul>
+
+        <h4>2. Como usamos seus dados</h4>
+        <p>Seus dados são usados <strong>exclusivamente</strong> para: preparar e entregar seu pedido, processar o pagamento e enviar atualizações sobre o status (ex.: "pedido pronto", "a caminho").</p>
+
+        <h4>3. Pagamento</h4>
+        <p>O pagamento via PIX é processado de forma segura pelo <strong>Mercado Pago</strong>. Não armazenamos dados de cartão ou senhas. As informações de pagamento são tratadas diretamente pelo Mercado Pago, conforme a política de privacidade deles.</p>
+
+        <h4>4. Compartilhamento</h4>
+        <p>Nós <strong>não vendemos, não alugamos e não compartilhamos</strong> seus dados com terceiros para fins de marketing. Os dados só são usados internamente para atender ao seu pedido.</p>
+
+        <h4>5. Notificações</h4>
+        <p>Se você ativar as notificações, usaremos isso apenas para avisar sobre o andamento do seu pedido. Você pode desativá-las a qualquer momento nas configurações do navegador.</p>
+
+        <h4>6. Seus direitos</h4>
+        <p>Você pode, a qualquer momento, solicitar o acesso, a correção ou a <strong>exclusão</strong> dos seus dados. Basta entrar em contato pelo nosso WhatsApp: <a href="https://wa.me/5584987533833" target="_blank" rel="noopener">(84) 98753-3833</a>.</p>
+
+        <h4>7. Contato</h4>
+        <p>Dúvidas sobre privacidade? Fale com a gente:<br>
+        📱 WhatsApp: <a href="https://wa.me/5584987533833" target="_blank" rel="noopener">(84) 98753-3833</a><br>
+        📍 Tv. Lauro Bezerra, 144 – Potengi, Natal/RN</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal: Termos de Uso ─────────────────────────────────── -->
+  <div id="terms-modal" class="legal-modal hidden">
+    <div class="legal-backdrop" onclick="document.getElementById('terms-modal').classList.add('hidden')"></div>
+    <div class="legal-sheet">
+      <div class="legal-header">
+        <h3>📄 Termos de Uso</h3>
+        <button type="button" class="legal-close" onclick="document.getElementById('terms-modal').classList.add('hidden')" aria-label="Fechar">✕</button>
+      </div>
+      <div class="legal-body">
+        <p class="legal-updated">Última atualização: junho de 2026</p>
+
+        <p>Ao fazer um pedido na <strong>Açaí Trufado</strong>, você concorda com os termos abaixo.</p>
+
+        <h4>1. Pedidos</h4>
+        <p>Os pedidos são feitos pelo site, montando o pote com os itens disponíveis. O valor total é calculado automaticamente e exibido antes da confirmação.</p>
+
+        <h4>2. Pagamento</h4>
+        <p>O pagamento é feito via <strong>PIX</strong>, processado pelo Mercado Pago. O pedido só entra na fila de preparo <strong>após a confirmação do pagamento</strong>.</p>
+
+        <h4>3. Entrega e retirada</h4>
+        <p>Você pode escolher <strong>retirar no local</strong> ou receber por <strong>motoboy</strong>. No caso de entrega, informe um endereço correto e completo. O prazo pode variar conforme a demanda e a distância.</p>
+
+        <h4>4. Cancelamento e reembolso</h4>
+        <p>Pedidos já em preparo podem não ser cancelados, por se tratar de produto perecível feito sob demanda. Em caso de problema com o pedido (erro, atraso, item faltando), entre em contato pelo WhatsApp para que possamos resolver.</p>
+
+        <h4>5. Disponibilidade</h4>
+        <p>Os sabores e ingredientes estão sujeitos à disponibilidade. A loja pode estar <strong>fechada</strong> em determinados horários — nesse caso, não será possível finalizar o pedido.</p>
+
+        <h4>6. Responsabilidade</h4>
+        <p>Nos esforçamos para que as informações (preços, fotos, descrições) estejam sempre corretas. Em caso de erro evidente, entraremos em contato antes de processar o pedido.</p>
+
+        <h4>7. Contato</h4>
+        <p>📱 WhatsApp: <a href="https://wa.me/5584987533833" target="_blank" rel="noopener">(84) 98753-3833</a><br>
+        📍 Tv. Lauro Bezerra, 144 – Potengi, Natal/RN</p>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Modal de Personalização do Pedido ────────────────────── -->
   <div id="order-overlay" class="order-overlay hidden" aria-modal="true" role="dialog">
