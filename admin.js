@@ -530,6 +530,54 @@ function stopPolling() {
   if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
 }
 
+/* ── Som de "pedido novo" (campainha gerada no navegador) ───────── */
+let audioCtx = null;
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch {}
+}
+// Desbloqueia o áudio na primeira interação (navegadores exigem gesto do usuário)
+document.addEventListener('click', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
+
+function playOrderSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    // Campainha alegre de 3 notas ascendentes (Lá → Dó# → Mi)
+    [{ f: 880, t: 0 }, { f: 1108.73, t: 0.14 }, { f: 1318.51, t: 0.28 }].forEach(({ f, t }) => {
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      gain.gain.setValueAtTime(0, now + t);
+      gain.gain.linearRampToValueAtTime(0.32, now + t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + t + 0.38);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + t);
+      osc.stop(now + t + 0.42);
+    });
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  } catch (e) { console.warn('Som falhou:', e); }
+}
+
+// Toca o som quando um pedido NOVO fica "pago" (com o painel aberto)
+let pagosConhecidos = null; // null = primeira carga (não toca)
+function detectarPedidoNovo(orders) {
+  const pagos = new Set(orders.filter(o => o.status === 'pago').map(o => o.id));
+  if (pagosConhecidos === null) { pagosConhecidos = pagos; return; }
+  let temNovo = false;
+  for (const id of pagos) if (!pagosConhecidos.has(id)) temNovo = true;
+  pagosConhecidos = pagos;
+  if (temNovo) {
+    playOrderSound();
+    showToast('🛎️ Novo pedido pago!');
+  }
+}
+
 btnRefresh.addEventListener('click', loadOrders);
 fabRefresh.addEventListener('click', loadOrders);
 
@@ -567,6 +615,7 @@ async function loadOrders() {
   } catch { /* offline ou 401 — apiFetch já trata o 401 (mostra login) */ }
 
   if (serverOrders) {
+    detectarPedidoNovo(serverOrders);
     renderOrders(serverOrders);
     return;
   }
@@ -1648,6 +1697,7 @@ async function subscribeAdminPush() {
       body: JSON.stringify({ userId: 'ADMIN', subscription: sub }),
     });
     showToast('🔔 Notificações de pedidos ativadas!');
+    playOrderSound(); // prévia do som de pedido novo
   } catch (e) {
     console.warn('Push admin falhou:', e);
     showToast('⚠️ Não consegui ativar as notificações.');

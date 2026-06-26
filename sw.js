@@ -12,6 +12,7 @@ self.addEventListener('push', e => {
       badge: '/logotipo.png',
       tag: orderId ?? 'acai-order',
       renotify: true,
+      vibrate: [200, 100, 200, 100, 300], // padrão diferenciado (Android)
       data: { url: url ?? '/index.html' },
     })
   );
