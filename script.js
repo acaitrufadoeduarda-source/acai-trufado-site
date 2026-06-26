@@ -1147,8 +1147,8 @@ async function openTracking(orderId) {
   trackingOverlay.classList.remove('hidden');
   document.getElementById('order-fab')?.classList.add('hidden');
 
-  // Polling de atualização de status
-  if (!['pronto', 'concluido'].includes(order.status)) {
+  // Continua checando até o pedido REALMENTE acabar (motoboy ainda passa por "a caminho")
+  if (!['concluido', 'cancelado', 'entregue'].includes(order.status)) {
     startTrackingPoll(orderId);
   }
 }
@@ -1179,7 +1179,8 @@ function startTrackingPoll(orderId) {
       const fab = document.getElementById('order-fab');
       if (fab && !fab.classList.contains('hidden') && typeof showFab === 'function') showFab(status);
 
-      if (['pronto', 'concluido'].includes(status)) clearInterval(pollInterval);
+      // Só para de checar quando o pedido REALMENTE acabar (não no "pronto" — motoboy continua)
+      if (['concluido', 'cancelado', 'entregue'].includes(status)) clearInterval(pollInterval);
     }
   }, 5000);
 }
