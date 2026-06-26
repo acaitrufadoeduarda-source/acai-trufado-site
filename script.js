@@ -978,7 +978,7 @@ async function checkPayment(orderId) {
   let status;
   // Tenta backend primeiro
   try {
-    const res = await fetch(`${API_BASE}/api/orders/${orderId}`, { signal: AbortSignal.timeout(2000) });
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}`, { signal: AbortSignal.timeout(8000) });
     if (res.ok) { const d = await res.json(); status = d.status; }
   } catch { /* usa localStorage */ }
 
@@ -1031,52 +1031,77 @@ const STATUS_DISPLAY = {
   concluido:         { icon: '💜', msg: 'Pedido Entregue!',              sub: 'Obrigada pela preferência! Até a próxima 🍧',            cls: 'status-concluido'  },
 };
 
-function openTracking(orderId) {
+// Renderiza o stepper + card de status com base em order.status (chamado no abrir e a cada mudança)
+function renderTrackingStatus(order) {
+  const stepper = document.getElementById('tracking-stepper');
+  if (stepper) {
+    stepper.innerHTML = '';
+    const steps = getTrackingSteps(order);
+    const statusIdx = steps.findIndex(s => s.key === trackingStatusKey(order.status));
+    steps.forEach((step, i) => {
+      if (i > 0) {
+        const line = document.createElement('div');
+        line.className = 'ts-line' + (i <= statusIdx ? ' done-line' : '');
+        if (i <= statusIdx) line.style.background = '#10b981';
+        stepper.appendChild(line);
+      }
+      const stepEl = document.createElement('div');
+      const cls = i < statusIdx ? 'done' : i === statusIdx ? 'active' : '';
+      stepEl.className = `ts-step ${cls}`;
+      stepEl.innerHTML = `<div class="ts-icon">${step.icon}</div><div class="ts-label">${step.label}</div>`;
+      stepper.appendChild(stepEl);
+    });
+  }
+
+  const sd = STATUS_DISPLAY[order.status] || STATUS_DISPLAY.aguardando_pix;
+  const card = document.getElementById('tracking-status-card');
+  if (card) {
+    card.className = 'tracking-status-card ' + sd.cls;
+    document.getElementById('tracking-status-msg').textContent = sd.msg;
+    document.getElementById('tracking-status-sub').textContent = sd.sub;
+  }
+
+  // Pote animado em preparando/pago, emoji nos demais
+  const isPreparando = order.status === 'preparando' || order.status === 'pago';
+  const iconEl = document.getElementById('tracking-status-icon');
+  const poteEl = document.getElementById('pote-anim');
+  if (iconEl && poteEl) {
+    if (isPreparando) {
+      iconEl.style.display = 'none';
+      poteEl.classList.remove('hidden');
+    } else {
+      iconEl.style.display = '';
+      iconEl.textContent = sd.icon;
+      poteEl.classList.add('hidden');
+    }
+  }
+
+  // Botão ver PIX só enquanto aguardando pagamento
+  const pixBtn = document.getElementById('tracking-show-pix');
+  if (pixBtn) pixBtn.style.display = order.status === 'aguardando_pix' ? '' : 'none';
+}
+
+async function openTracking(orderId) {
   const orders = getOrders();
   const order  = orders.find(x => x.id === orderId);
   if (!order) return;
 
+  // Status REAL vem do SERVIDOR — o localStorage do cliente fica congelado em "aguardando_pix"
+  try {
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}`, { signal: AbortSignal.timeout(8000) });
+    if (res.ok) {
+      const d = await res.json();
+      if (d.status) {
+        order.status = d.status;
+        const idx = orders.findIndex(x => x.id === orderId);
+        if (idx !== -1) { orders[idx].status = d.status; saveOrders(orders); }
+      }
+    }
+  } catch { /* offline — usa o status que tiver localmente */ }
+
   document.getElementById('tracking-id-num').textContent = '#' + orderId.slice(-6).toUpperCase();
 
-  // Stepper — steps dinâmicos por método de entrega
-  const stepper = document.getElementById('tracking-stepper');
-  stepper.innerHTML = '';
-  const steps = getTrackingSteps(order);
-  const statusIdx = steps.findIndex(s => s.key === trackingStatusKey(order.status));
-
-  steps.forEach((step, i) => {
-    if (i > 0) {
-      const line = document.createElement('div');
-      line.className = 'ts-line' + (i <= statusIdx ? ' done-line' : '');
-      if (i <= statusIdx) line.style.background = '#10b981';
-      stepper.appendChild(line);
-    }
-    const stepEl = document.createElement('div');
-    const cls = i < statusIdx ? 'done' : i === statusIdx ? 'active' : '';
-    stepEl.className = `ts-step ${cls}`;
-    stepEl.innerHTML = `<div class="ts-icon">${step.icon}</div><div class="ts-label">${step.label}</div>`;
-    stepper.appendChild(stepEl);
-  });
-
-  // Status card
-  const sd = STATUS_DISPLAY[order.status] || STATUS_DISPLAY.aguardando_pix;
-  const card = document.getElementById('tracking-status-card');
-  card.className = 'tracking-status-card ' + sd.cls;
-  document.getElementById('tracking-status-msg').textContent = sd.msg;
-  document.getElementById('tracking-status-sub').textContent = sd.sub;
-
-  // Mostra pote animado em preparando, emoji nos demais status
-  const isPreparando = order.status === 'preparando' || order.status === 'pago';
-  const iconEl  = document.getElementById('tracking-status-icon');
-  const poteEl  = document.getElementById('pote-anim');
-  if (isPreparando) {
-    iconEl.style.display = 'none';
-    poteEl.classList.remove('hidden');
-  } else {
-    iconEl.style.display = '';
-    iconEl.textContent = sd.icon;
-    poteEl.classList.add('hidden');
-  }
+  renderTrackingStatus(order);
 
   // Resumo
   document.getElementById('tracking-prod-name').textContent = order.product?.name || '';
@@ -1119,10 +1144,6 @@ function openTracking(orderId) {
     addrBlock.innerHTML = '';
   }
 
-  // Botão ver PIX se ainda aguardando
-  const pixBtn = document.getElementById('tracking-show-pix');
-  pixBtn.style.display = order.status === 'aguardando_pix' ? '' : 'none';
-
   trackingOverlay.classList.remove('hidden');
   document.getElementById('order-fab')?.classList.add('hidden');
 
@@ -1134,38 +1155,31 @@ function openTracking(orderId) {
 
 function startTrackingPoll(orderId) {
   clearInterval(pollInterval);
+  let lastStatus = null;
   pollInterval = setInterval(async () => {
     let status;
     try {
-      const res = await fetch(`${API_BASE}/api/orders/${orderId}`, { signal: AbortSignal.timeout(2000) });
+      const res = await fetch(`${API_BASE}/api/orders/${orderId}`, { signal: AbortSignal.timeout(8000) });
       if (res.ok) { const d = await res.json(); status = d.status; }
-    } catch { /* usa localStorage */ }
+    } catch { /* sem resposta do servidor */ }
 
-    if (!status) {
-      const o = getOrders().find(x => x.id === orderId);
-      status = o?.status;
-    }
+    // Sem resposta: NÃO rebaixa pro localStorage (que está congelado). Mantém o que está na tela.
+    if (!status) return;
 
-    const sd = STATUS_DISPLAY[status];
-    if (sd) {
-      const card = document.getElementById('tracking-status-card');
-      if (card) {
-        card.className = 'tracking-status-card ' + sd.cls;
-        document.getElementById('tracking-status-icon').textContent = sd.icon;
-        document.getElementById('tracking-status-msg').textContent  = sd.msg;
-        document.getElementById('tracking-status-sub').textContent  = sd.sub;
-      }
-    }
+    if (status !== lastStatus) {
+      lastStatus = status;
+      // Atualiza o objeto local e re-renderiza stepper + card (os passos avançam de verdade)
+      const orders = getOrders();
+      const idx = orders.findIndex(x => x.id === orderId);
+      const order = idx !== -1 ? orders[idx] : { id: orderId, status, deliveryMethod: 'retirada' };
+      order.status = status;
+      if (idx !== -1) saveOrders(orders);
+      renderTrackingStatus(order);
 
-    // Atualiza bolinha se o tracking estiver fechado
-    const fab = document.getElementById('order-fab');
-    if (fab && !fab.classList.contains('hidden')) {
-      if (typeof showFab === 'function') showFab(status);
-    }
+      const fab = document.getElementById('order-fab');
+      if (fab && !fab.classList.contains('hidden') && typeof showFab === 'function') showFab(status);
 
-    if (['pronto', 'concluido'].includes(status)) {
-      clearInterval(pollInterval);
-      openTracking(orderId);
+      if (['pronto', 'concluido'].includes(status)) clearInterval(pollInterval);
     }
   }, 5000);
 }
