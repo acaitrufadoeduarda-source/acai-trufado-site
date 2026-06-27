@@ -2157,6 +2157,7 @@ footer {
 
 /* ── Forma de pagamento (PIX / Dinheiro) ─────────────────── */
 .pay-method-block { margin-bottom: 1.25rem; }
+.pay-method-block.hidden { display: none; }
 .pay-opt {
   display: flex;
   align-items: center;
