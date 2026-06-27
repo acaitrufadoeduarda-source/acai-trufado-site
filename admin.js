@@ -618,6 +618,7 @@ function mapServerOrder(o) {
     total:          o.total,
     status:         o.status,
     pixCode:        o.pix_code,
+    paymentMethod:  o.payment_method || 'pix',
   };
 }
 
@@ -703,13 +704,17 @@ function buildCard(order) {
   card.querySelector('.order-customer').textContent = order.customerName || '—';
   card.querySelector('.order-time').textContent     = formatTime(order.createdAt);
 
+  const isCash = order.paymentMethod === 'dinheiro';
+
   const badge = card.querySelector('.order-badge');
-  badge.textContent  = STATUS_LABEL[order.status] || order.status;
+  // Dinheiro: 'pago' não é "PIX Pago" — é pedido confirmado p/ pagar na retirada
+  badge.textContent  = (isCash && order.status === 'pago') ? '💵 Dinheiro' : (STATUS_LABEL[order.status] || order.status);
   badge.className    = 'order-badge ' + (STATUS_BADGE_CLASS[order.status] || '');
 
-  // Produto + entrega
+  // Produto + entrega (+ indicador de pagamento em dinheiro)
   card.querySelector('.order-product-name').textContent    = order.product?.name || '—';
-  card.querySelector('.order-delivery-badge').textContent  = DELIVERY_LABEL[order.deliveryMethod] || order.deliveryMethod || '—';
+  const delivLabel = DELIVERY_LABEL[order.deliveryMethod] || order.deliveryMethod || '—';
+  card.querySelector('.order-delivery-badge').textContent  = isCash ? `${delivLabel} · 💵 Dinheiro` : delivLabel;
 
   // Seleções (suporta carrinho com vários potes E formato antigo de 1 item)
   const selList = card.querySelector('.order-sel-list');
@@ -792,7 +797,7 @@ function buildCard(order) {
 
   if (order.status === 'preparando') {
     waRow.classList.remove('hidden');
-    waTxt.textContent = 'Avisar: PIX confirmado';
+    waTxt.textContent = isCash ? 'Avisar: pedido recebido' : 'Avisar: PIX confirmado';
     waBtn.addEventListener('click', () => abrirWhatsApp(order, 'pix_confirmado'));
   } else if (order.status === 'pronto') {
     waRow.classList.remove('hidden');
@@ -832,20 +837,28 @@ function abrirWhatsApp(order, tipo) {
 
   let msg = '';
 
+  const isCash = order.paymentMethod === 'dinheiro';
+
   if (tipo === 'pix_confirmado') {
-    msg = `✅ *Olá ${nome}, seu pagamento foi confirmado!*\n\n` +
+    const topo = isCash
+      ? `✅ *Olá ${nome}, recebemos seu pedido!*`
+      : `✅ *Olá ${nome}, seu pagamento foi confirmado!*`;
+    const pagamento = isCash ? `💵 Pagamento: *na retirada (dinheiro)*\n` : '';
+    msg = `${topo}\n\n` +
           `Pedido: *${idCurto}*\n` +
           `---------------------------------------\n` +
           `🍧 *${produto}*\n` +
           (itens ? itens : '') +
           `---------------------------------------\n` +
-          `💰 Total: *${total}*\n\n` +
+          `💰 Total: *${total}*\n` +
+          pagamento + `\n` +
           `Já estamos preparando seu açaí com carinho! 🍫\n\n` +
           `📍 Acompanhe em tempo real:\n${SITE_URL}`;
   } else if (tipo === 'pronto') {
+    const pagamentoLembrete = isCash ? `💵 *Leve R$ ${Number(order.total).toFixed(2).replace('.', ',')} em dinheiro.*\n` : '';
     const retiradaOuMotoboy = order.deliveryMethod === 'motoboy'
       ? `🛵 Pode solicitar o motoboy agora!\n📍 Nosso endereço: Tv. Lauro Bezerra, 144 - Potengi, Natal - RN`
-      : `🏠 Pode vir buscar agora!\n📍 Tv. Lauro Bezerra, 144 - Potengi, Natal - RN`;
+      : `🏠 Pode vir buscar agora!\n${pagamentoLembrete}📍 Tv. Lauro Bezerra, 144 - Potengi, Natal - RN`;
 
     msg = `🎉 *Olá ${nome}, seu pedido está pronto!*\n\n` +
           `Pedido: *${idCurto}*\n` +

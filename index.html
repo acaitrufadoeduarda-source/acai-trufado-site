@@ -417,6 +417,29 @@
           </button>
         </div>
 
+        <!-- Forma de pagamento — só aparece na RETIRADA (motoboy é sempre PIX) -->
+        <div class="pay-method-block hidden" id="pay-method-block">
+          <h3 class="step-title">Como vai pagar?</h3>
+          <div class="delivery-options">
+            <button type="button" class="pay-opt selected" data-pay="pix" id="pay-pix">
+              <span class="delivery-opt-icon">📱</span>
+              <span class="delivery-opt-texts">
+                <strong>PIX</strong>
+                <small>Pague agora pelo app</small>
+              </span>
+              <span class="delivery-check">✓</span>
+            </button>
+            <button type="button" class="pay-opt" data-pay="dinheiro" id="pay-dinheiro">
+              <span class="delivery-opt-icon">💵</span>
+              <span class="delivery-opt-texts">
+                <strong>Dinheiro</strong>
+                <small>Pague na hora de retirar</small>
+              </span>
+              <span class="delivery-check">✓</span>
+            </button>
+          </div>
+        </div>
+
         <div class="step-fields">
           <div class="step-field">
             <label class="step-field-label">Seu nome *</label>

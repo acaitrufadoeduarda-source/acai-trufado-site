@@ -544,6 +544,7 @@ const trackingOverlay = document.getElementById('tracking-overlay');
 let orderSelections  = {};
 let orderProduct     = null;
 let selectedDelivery = null;
+let selectedPay      = 'pix';   // 'pix' | 'dinheiro' (dinheiro só na retirada)
 let activeOrderId    = null;
 let pixTimerInterval = null;
 let pollInterval     = null;
@@ -851,12 +852,47 @@ function openDeliveryStep() {
   deliveryOverlay.classList.remove('hidden');
 }
 
+// Atualiza o texto do botão final conforme a forma de pagamento escolhida
+function updateDeliveryNextLabel() {
+  const btn = document.getElementById('delivery-next');
+  if (!btn) return;
+  const mark = btn.querySelector('.pix-mark');
+  if (selectedDelivery === 'retirada' && selectedPay === 'dinheiro') {
+    if (mark) mark.style.display = 'none';
+    btn.lastChild.textContent = ' 💵 Confirmar Pedido →';
+  } else {
+    if (mark) mark.style.display = '';
+    btn.lastChild.textContent = ' Pagar via PIX →';
+  }
+}
+
 // Seleção de método de entrega
 deliveryOverlay.querySelectorAll('.delivery-opt').forEach(btn => {
   btn.addEventListener('click', () => {
     deliveryOverlay.querySelectorAll('.delivery-opt').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedDelivery = btn.dataset.method;
+
+    // Forma de pagamento só vale para RETIRADA. Motoboy é sempre PIX.
+    const payBlock = document.getElementById('pay-method-block');
+    if (selectedDelivery === 'retirada') {
+      payBlock.classList.remove('hidden');
+    } else {
+      payBlock.classList.add('hidden');
+      selectedPay = 'pix';
+      payBlock.querySelectorAll('.pay-opt').forEach(b => b.classList.toggle('selected', b.dataset.pay === 'pix'));
+    }
+    updateDeliveryNextLabel();
+  });
+});
+
+// Seleção da forma de pagamento (PIX / Dinheiro)
+document.querySelectorAll('#pay-method-block .pay-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#pay-method-block .pay-opt').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedPay = btn.dataset.pay;
+    updateDeliveryNextLabel();
   });
 });
 
@@ -884,18 +920,26 @@ document.getElementById('delivery-next').addEventListener('click', async () => {
   }
   errEl.classList.add('hidden');
 
-  // Trava o botão durante a geração do PIX
+  // Dinheiro só é permitido na retirada (motoboy = sempre PIX)
+  const pagarDinheiro = selectedDelivery === 'retirada' && selectedPay === 'dinheiro';
+
+  // Trava o botão durante o processamento
   submittingOrder = true;
   btn.disabled = true;
-  const txtOriginal = btn.textContent;
-  btn.textContent = 'Gerando PIX…';
+  const lastNode = btn.lastChild;
+  const txtOriginal = lastNode.textContent;
+  lastNode.textContent = pagarDinheiro ? ' Enviando pedido…' : ' Gerando PIX…';
 
   try {
-    await openPixStep(name, phone);
+    if (pagarDinheiro) {
+      await openCashConfirm(name, phone);
+    } else {
+      await openPixStep(name, phone);
+    }
   } finally {
     submittingOrder = false;
     btn.disabled = false;
-    btn.textContent = txtOriginal;
+    lastNode.textContent = txtOriginal;
   }
 });
 
@@ -1072,6 +1116,72 @@ async function openPixStep(customerName, customerPhone) {
   setTimeout(() => window.showPwaPrompt?.(), 8000);
 }
 
+/* ════════════════════════════════════════════════════════════
+   PAGAMENTO EM DINHEIRO (só retirada) — sem PIX, vai direto ao acompanhamento
+════════════════════════════════════════════════════════════ */
+async function openCashConfirm(customerName, customerPhone) {
+  const total   = cartTotal();
+  const orderId = uid();
+  activeOrderId = orderId;
+  localStorage.setItem('acai_active_order', orderId);
+
+  const potes = cart.map(i => ({ produto: i.productName, subtotal: i.subtotal, grupos: i.summary }));
+  const nomeResumo = cart.length === 1 ? cart[0].productName : `${cart.length} itens`;
+
+  const order = {
+    id: orderId,
+    createdAt: Date.now(),
+    product: { name: nomeResumo },
+    summary: potes,
+    deliveryMethod: 'retirada',
+    customerName,
+    customerPhone,
+    paymentMethod: 'dinheiro',
+    total,
+    status: 'pago', // confirmado na hora — paga na retirada
+  };
+
+  // Envia ao backend (sem PIX). O servidor recalcula o total.
+  try {
+    const res = await fetch(`${API_BASE}/api/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName,
+        customerPhone,
+        deliveryMethod: 'retirada',
+        paymentMethod: 'dinheiro',
+        items: cart.map(i => ({ productId: i.productId, productName: i.productName, summary: i.summary })),
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      order.id = data.id || orderId;
+      if (data.total != null) order.total = data.total;
+      activeOrderId = order.id;
+      localStorage.setItem('acai_active_order', order.id);
+    }
+  } catch { /* offline — mantém o pedido local */ }
+
+  const orders = getOrders();
+  orders.unshift(order);
+  saveOrders(orders);
+
+  // Pedido criado → esvazia o carrinho
+  cart = [];
+  updateCartButton();
+
+  if (order.customerPhone) localStorage.setItem('acai_customer_phone', order.customerPhone);
+  subscribePush(order.customerPhone || '');
+
+  // Sem tela de PIX — vai direto ao acompanhamento
+  deliveryOverlay.classList.add('hidden');
+  openTracking(order.id);
+
+  setTimeout(() => window.showPwaPrompt?.(), 8000);
+}
+
 // Botão copiar PIX
 document.getElementById('pix-copy-btn').addEventListener('click', () => {
   const code = document.getElementById('pix-code-text').textContent;
@@ -1136,12 +1246,22 @@ const TRACKING_STEPS_MOTOBOY = [
   { key: 'motoboy_a_caminho', icon: '🛵', label: 'A Caminho'  },
 ];
 
+// Dinheiro (retirada): o 1º passo é "Confirmado" no lugar do PIX
+const TRACKING_STEPS_DINHEIRO = [
+  { key: 'pago',       icon: '✅', label: 'Confirmado' },
+  { key: 'preparando', icon: '🍧', label: 'Preparando' },
+  { key: 'pronto',     icon: '🎉', label: 'Pronto'     },
+];
+
 function getTrackingSteps(order) {
+  if (order.paymentMethod === 'dinheiro') return TRACKING_STEPS_DINHEIRO;
   return order.deliveryMethod === 'motoboy' ? TRACKING_STEPS_MOTOBOY : TRACKING_STEPS_RETIRADA;
 }
 
 // pago é tratado como preparando no stepper (mesmo passo visual)
-function trackingStatusKey(status) {
+// — exceto no dinheiro, onde 'pago' é o próprio passo "Confirmado"
+function trackingStatusKey(status, order) {
+  if (order?.paymentMethod === 'dinheiro') return status;
   return status === 'pago' ? 'preparando' : status;
 }
 
@@ -1160,7 +1280,7 @@ function renderTrackingStatus(order) {
   if (stepper) {
     stepper.innerHTML = '';
     const steps = getTrackingSteps(order);
-    const statusIdx = steps.findIndex(s => s.key === trackingStatusKey(order.status));
+    const statusIdx = steps.findIndex(s => s.key === trackingStatusKey(order.status, order));
     steps.forEach((step, i) => {
       if (i > 0) {
         const line = document.createElement('div');
@@ -1176,7 +1296,16 @@ function renderTrackingStatus(order) {
     });
   }
 
-  const sd = STATUS_DISPLAY[order.status] || STATUS_DISPLAY.aguardando_pix;
+  let sd = STATUS_DISPLAY[order.status] || STATUS_DISPLAY.aguardando_pix;
+  // Dinheiro: 'pago' = pedido confirmado, paga na retirada (não "PIX confirmado")
+  if (order.paymentMethod === 'dinheiro' && order.status === 'pago') {
+    sd = {
+      icon: '✅',
+      msg: 'Pedido Confirmado!',
+      sub: `💵 Pague R$ ${Number(order.total).toFixed(2).replace('.', ',')} em dinheiro na hora de retirar.`,
+      cls: 'status-pronto',
+    };
+  }
   const card = document.getElementById('tracking-status-card');
   if (card) {
     card.className = 'tracking-status-card ' + sd.cls;
@@ -1184,8 +1313,9 @@ function renderTrackingStatus(order) {
     document.getElementById('tracking-status-sub').textContent = sd.sub;
   }
 
-  // Pote animado em preparando/pago, emoji nos demais
-  const isPreparando = order.status === 'preparando' || order.status === 'pago';
+  // Pote animado em preparando/pago (PIX), emoji nos demais
+  const isPreparando = order.status === 'preparando' ||
+    (order.status === 'pago' && order.paymentMethod !== 'dinheiro');
   const iconEl = document.getElementById('tracking-status-icon');
   const poteEl = document.getElementById('pote-anim');
   if (iconEl && poteEl) {

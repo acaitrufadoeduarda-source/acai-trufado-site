@@ -2155,6 +2155,33 @@ footer {
 
 .delivery-opt.selected .delivery-check { opacity: 1; }
 
+/* ── Forma de pagamento (PIX / Dinheiro) ─────────────────── */
+.pay-method-block { margin-bottom: 1.25rem; }
+.pay-opt {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  padding: .9rem 1rem;
+  background: rgba(255,255,255,.05);
+  border: 1.5px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .2s;
+  color: #fff;
+  width: 100%;
+}
+.pay-opt:hover {
+  border-color: rgba(255,255,255,.28);
+  background: rgba(255,255,255,.09);
+}
+.pay-opt.selected {
+  border-color: var(--primary);
+  background: rgba(233,30,140,.12);
+  box-shadow: 0 0 0 1px rgba(233,30,140,.3);
+}
+.pay-opt.selected .delivery-check { opacity: 1; }
+
 /* ── Campos de texto ─────────────────────────────────────── */
 .step-fields { display: flex; flex-direction: column; gap: .75rem; }
 
