@@ -840,6 +840,11 @@ function abrirWhatsApp(order, tipo) {
   });
   const total = `R$ ${Number(order.total).toFixed(2).replace('.', ',')}`;
 
+  // Resumo do pedido sem duplicar o nome: no formato carrinho (potes) a lista
+  // já traz o nome de cada pote; o cabeçalho só é usado no formato antigo.
+  const temPotes = (order.summary || []).some(i => i.grupos || i.produto);
+  const resumoPedido = temPotes ? itens.replace(/^\n/, '') : `🍧 *${produto}*\n${itens}`;
+
   let msg = '';
 
   const isCash = order.paymentMethod === 'dinheiro';
@@ -852,8 +857,7 @@ function abrirWhatsApp(order, tipo) {
           `Vimos aqui que você fez um pedido na *Açaí Trufado*, mas o pagamento via PIX ainda não caiu pra gente. 🍧\n\n` +
           `Pedido: *${idCurto}*\n` +
           `---------------------------------------\n` +
-          `🍧 *${produto}*\n` +
-          (itens ? itens : '') +
+          resumoPedido +
           `---------------------------------------\n` +
           `💰 Total: *${total}*\n` +
           pixLinha +
@@ -867,8 +871,7 @@ function abrirWhatsApp(order, tipo) {
     msg = `${topo}\n\n` +
           `Pedido: *${idCurto}*\n` +
           `---------------------------------------\n` +
-          `🍧 *${produto}*\n` +
-          (itens ? itens : '') +
+          resumoPedido +
           `---------------------------------------\n` +
           `💰 Total: *${total}*\n` +
           pagamento + `\n` +
@@ -883,8 +886,7 @@ function abrirWhatsApp(order, tipo) {
     msg = `🎉 *Olá ${nome}, seu pedido está pronto!*\n\n` +
           `Pedido: *${idCurto}*\n` +
           `---------------------------------------\n` +
-          `🍧 *${produto}*\n` +
-          (itens ? itens : '') +
+          resumoPedido +
           `---------------------------------------\n` +
           `💰 Total: *${total}*\n\n` +
           `${retiradaOuMotoboy}\n\n` +
