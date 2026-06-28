@@ -790,12 +790,17 @@ function buildCard(order) {
     });
   }
 
-  // Botão WhatsApp — aparece em preparando e pronto
+  // Botão WhatsApp — aparece em aguardando PIX, preparando e pronto
   const waRow  = card.querySelector('.order-whatsapp-row');
   const waBtn  = card.querySelector('.btn-whatsapp-notify');
   const waTxt  = card.querySelector('.btn-wa-txt');
 
-  if (order.status === 'preparando') {
+  if (order.status === 'aguardando_pix') {
+    // Cobrar o PIX do cliente que não pagou ainda
+    waRow.classList.remove('hidden');
+    waTxt.textContent = 'Cobrar PIX do cliente';
+    waBtn.addEventListener('click', () => abrirWhatsApp(order, 'cobranca_pix'));
+  } else if (order.status === 'preparando') {
     waRow.classList.remove('hidden');
     waTxt.textContent = isCash ? 'Avisar: pedido recebido' : 'Avisar: PIX confirmado';
     waBtn.addEventListener('click', () => abrirWhatsApp(order, 'pix_confirmado'));
@@ -839,7 +844,22 @@ function abrirWhatsApp(order, tipo) {
 
   const isCash = order.paymentMethod === 'dinheiro';
 
-  if (tipo === 'pix_confirmado') {
+  if (tipo === 'cobranca_pix') {
+    const pixLinha = order.pixCode
+      ? `\nSe quiser, segue o PIX copia e cola pra pagar:\n\n${order.pixCode}\n`
+      : '';
+    msg = `Oi ${nome}! 😊 Tudo bem?\n\n` +
+          `Vimos aqui que você fez um pedido na *Açaí Trufado*, mas o pagamento via PIX ainda não caiu pra gente. 🍧\n\n` +
+          `Pedido: *${idCurto}*\n` +
+          `---------------------------------------\n` +
+          `🍧 *${produto}*\n` +
+          (itens ? itens : '') +
+          `---------------------------------------\n` +
+          `💰 Total: *${total}*\n` +
+          pixLinha +
+          `\nAinda quer o pedido? É só concluir o PIX que já começamos a preparar! 💜\n` +
+          `Se preferir, pode refazer pelo site:\n${SITE_URL}`;
+  } else if (tipo === 'pix_confirmado') {
     const topo = isCash
       ? `✅ *Olá ${nome}, recebemos seu pedido!*`
       : `✅ *Olá ${nome}, seu pagamento foi confirmado!*`;
